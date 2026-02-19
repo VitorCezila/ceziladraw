@@ -1,4 +1,4 @@
-import type { DrawableElement, ArrowElement, LineElement } from '../types/elements';
+import type { DrawableElement, ArrowElement, LineElement, PencilElement } from '../types/elements';
 import type { Point } from '../types/geometry';
 import { toElementLocalSpace } from './transform';
 import { distance } from '../utils/math';
@@ -12,8 +12,8 @@ export function hitTestElement(
 ): boolean {
   const threshold = HIT_THRESHOLD_PX / zoom;
 
-  if (element.type === 'arrow' || element.type === 'line') {
-    return hitTestPolyline(element as ArrowElement | LineElement, worldPoint, threshold);
+  if (element.type === 'arrow' || element.type === 'line' || element.type === 'pencil') {
+    return hitTestPolyline(element as ArrowElement | LineElement | PencilElement, worldPoint, threshold);
   }
 
   const cx = element.x + element.width / 2;
@@ -80,7 +80,7 @@ function hitTestDiamond(
 }
 
 function hitTestPolyline(
-  element: ArrowElement | LineElement,
+  element: ArrowElement | LineElement | PencilElement,
   point: Point,
   threshold: number,
 ): boolean {

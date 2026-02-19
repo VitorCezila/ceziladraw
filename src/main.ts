@@ -6,8 +6,9 @@ import { EventHandler } from './canvas/EventHandler';
 import { initStorage, exportToJson, importFromJson } from './storage/localStorage';
 import { subscribeToAppState } from './state/appState';
 import { subscribeToUIState, setViewport, getUIState } from './state/uiState';
-import { canUndo, canRedo, subscribeToHistory } from './state/history';
+import { undo, redo, canUndo, canRedo, subscribeToHistory } from './state/history';
 import { zoomOnPoint } from './geometry/transform';
+import { initTheme, toggleTheme, getTheme } from './utils/theme';
 
 const ZOOM_STEP = 0.15;
 
@@ -24,11 +25,14 @@ function main() {
   const btnZoomOut = document.getElementById('zoom-out')!;
   const btnZoomReset = document.getElementById('zoom-reset')!;
 
+  const btnTheme = document.getElementById('btn-theme')!;
+
   // ── Core setup ──────────────────────────────────────────
+  initTheme();
   initStorage();
   const canvasManager = new CanvasManager(container);
   const renderer = new Renderer(canvasManager.sceneCanvas, canvasManager.interactionCanvas);
-  const toolManager = new ToolManager(renderer, textContainer);
+  const toolManager = new ToolManager(renderer, textContainer, container);
   new EventHandler(
     canvasManager.interactionCanvas,
     toolManager,
@@ -56,9 +60,10 @@ function main() {
     });
 
     const cursorMap: Record<string, string> = {
-      select: 'tool-select', text: 'tool-text',
+      select: 'tool-select', text: 'tool-text', hand: 'tool-hand',
     };
-    container.className = cursorMap[activeTool] ?? '';
+    const draggingClass = container.classList.contains('dragging') ? ' dragging' : '';
+    container.className = (cursorMap[activeTool] ?? '') + draggingClass;
 
     zoomLabel.textContent = `${Math.round(viewport.zoom * 100)}%`;
   });
@@ -70,6 +75,9 @@ function main() {
   };
   subscribeToHistory(updateUndoRedo);
   updateUndoRedo();
+
+  btnUndo.addEventListener('click', () => { undo(); renderer.requestFullRender(); });
+  btnRedo.addEventListener('click', () => { redo(); renderer.requestFullRender(); });
 
   // ── Zoom buttons ─────────────────────────────────────────
   const getCenterPoint = () => {
@@ -93,6 +101,24 @@ function main() {
 
   btnZoomReset.addEventListener('click', () => {
     setViewport({ x: 0, y: 0, zoom: 1 });
+    renderer.requestFullRender();
+  });
+
+  // ── Theme toggle ─────────────────────────────────────────
+  const updateThemeBtn = () => {
+    btnTheme.textContent = getTheme() === 'dark' ? '🌙' : '☀️';
+    btnTheme.title = getTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  };
+  updateThemeBtn();
+
+  btnTheme.addEventListener('click', () => {
+    toggleTheme();
+    updateThemeBtn();
+    renderer.requestFullRender();
+  });
+
+  window.addEventListener('themechange', () => {
+    updateThemeBtn();
     renderer.requestFullRender();
   });
 

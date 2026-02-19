@@ -8,7 +8,9 @@ export type ToolType =
   | 'ellipse'
   | 'arrow'
   | 'line'
-  | 'text';
+  | 'text'
+  | 'pencil'
+  | 'hand';
 
 export interface AppState {
   elements: Map<string, DrawableElement>;

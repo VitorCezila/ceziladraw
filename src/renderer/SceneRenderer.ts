@@ -8,6 +8,8 @@ import { renderDiamond } from './elements/renderDiamond';
 import { renderEllipse } from './elements/renderEllipse';
 import { renderText } from './elements/renderText';
 import { renderArrow, renderLine } from './elements/renderArrow';
+import { renderPencil } from './elements/renderPencil';
+import { getCanvasColors } from '../utils/theme';
 
 export class SceneRenderer {
   private canvas: HTMLCanvasElement;
@@ -76,6 +78,9 @@ export class SceneRenderer {
       case 'line':
         renderLine(this.rc, el);
         break;
+      case 'pencil':
+        renderPencil(this.ctx, el);
+        break;
     }
   }
 
@@ -85,7 +90,8 @@ export class SceneRenderer {
     h: number,
     viewport: Viewport,
   ): void {
-    ctx.fillStyle = '#fafaf9';
+    const { background } = getCanvasColors();
+    ctx.fillStyle = background;
     ctx.fillRect(0, 0, w, h);
     this._drawDotGrid(ctx, w, h, viewport);
   }
@@ -103,7 +109,8 @@ export class SceneRenderer {
     const offsetX = viewport.x % gridSize;
     const offsetY = viewport.y % gridSize;
 
-    ctx.fillStyle = '#d4d4d4';
+    const { dot } = getCanvasColors();
+    ctx.fillStyle = dot;
     for (let x = offsetX; x < w; x += gridSize) {
       for (let y = offsetY; y < h; y += gridSize) {
         ctx.beginPath();

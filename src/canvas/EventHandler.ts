@@ -1,6 +1,7 @@
 import type { ToolManager } from '../tools/ToolManager';
 import type { Renderer } from '../renderer/Renderer';
-import { getUIState, setUIState, setViewport, setActiveTool } from '../state/uiState';
+import type { ToolType } from '../types/state';
+import { getUIState, setUIState, setViewport } from '../state/uiState';
 import { getAppState, setAppState } from '../state/appState';
 import { screenToWorld, zoomOnPoint } from '../geometry/transform';
 import { undo, redo } from '../state/history';
@@ -10,6 +11,7 @@ export class EventHandler {
   private toolManager: ToolManager;
   private renderer: Renderer;
   private _isPointerDown = false;
+  private _toolBeforeSpace: ToolType | null = null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -30,6 +32,7 @@ export class EventHandler {
     c.addEventListener('pointercancel', this._onPointerUp);
     c.addEventListener('wheel', this._onWheel, { passive: false });
     window.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('keyup', this._onKeyUp);
   }
 
   destroy(): void {
@@ -40,6 +43,7 @@ export class EventHandler {
     c.removeEventListener('pointercancel', this._onPointerUp);
     c.removeEventListener('wheel', this._onWheel);
     window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('keyup', this._onKeyUp);
   }
 
   private _onPointerDown = (e: PointerEvent): void => {
@@ -105,9 +109,20 @@ export class EventHandler {
     if (ctrl && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); this.renderer.requestFullRender(); return; }
     if (ctrl && e.key === 'a') { e.preventDefault(); setAppState({ selectedIds: new Set(getAppState().elements.keys()) }); this.renderer.renderInteraction(null); return; }
 
-    const toolKeys: Record<string, Parameters<typeof setActiveTool>[0]> = {
+    if (e.code === 'Space' && !e.repeat && this._toolBeforeSpace === null) {
+      e.preventDefault();
+      const { activeTool } = getUIState();
+      if (activeTool !== 'hand') {
+        this._toolBeforeSpace = activeTool;
+        this.toolManager.setTool('hand');
+      }
+      return;
+    }
+
+    const toolKeys: Record<string, ToolType> = {
       v: 'select', r: 'rectangle', d: 'diamond',
       o: 'ellipse', a: 'arrow', l: 'line', t: 'text',
+      p: 'pencil', h: 'hand',
     };
     if (toolKeys[e.key.toLowerCase()]) {
       this.toolManager.setTool(toolKeys[e.key.toLowerCase()]);
@@ -115,6 +130,13 @@ export class EventHandler {
     }
 
     this.toolManager.onKeyDown(e);
+  };
+
+  private _onKeyUp = (e: KeyboardEvent): void => {
+    if (e.code === 'Space' && this._toolBeforeSpace !== null) {
+      this.toolManager.setTool(this._toolBeforeSpace);
+      this._toolBeforeSpace = null;
+    }
   };
 
   private _toWorld(e: PointerEvent | WheelEvent) {

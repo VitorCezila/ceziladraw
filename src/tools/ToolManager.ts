@@ -9,6 +9,8 @@ import { EllipseTool } from './EllipseTool';
 import { ArrowTool } from './ArrowTool';
 import { LineTool } from './LineTool';
 import { TextTool } from './TextTool';
+import { PencilTool } from './PencilTool';
+import { HandTool } from './HandTool';
 
 export interface Tool {
   onPointerDown(point: Point, e: PointerEvent): void;
@@ -21,7 +23,7 @@ export interface Tool {
 export class ToolManager {
   private tools: Record<ToolType, Tool>;
 
-  constructor(renderer: Renderer, textContainer: HTMLElement) {
+  constructor(renderer: Renderer, textContainer: HTMLElement, canvasContainer: HTMLElement) {
     this.tools = {
       select: new SelectTool(renderer),
       rectangle: new RectangleTool(renderer),
@@ -30,6 +32,8 @@ export class ToolManager {
       arrow: new ArrowTool(renderer),
       line: new LineTool(renderer),
       text: new TextTool(renderer, textContainer),
+      pencil: new PencilTool(renderer),
+      hand: new HandTool(renderer, canvasContainer),
     };
   }
 

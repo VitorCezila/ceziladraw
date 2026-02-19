@@ -7,6 +7,7 @@ import { renderRect } from './elements/renderRect';
 import { renderDiamond } from './elements/renderDiamond';
 import { renderEllipse } from './elements/renderEllipse';
 import { renderArrow, renderLine } from './elements/renderArrow';
+import { renderPencil } from './elements/renderPencil';
 
 const HANDLE_SIZE = 8;
 const HANDLE_COLOR = '#3b82f6';
@@ -77,6 +78,9 @@ export class InteractionRenderer {
         break;
       case 'line':
         renderLine(this.rc, el);
+        break;
+      case 'pencil':
+        renderPencil(this.ctx, el);
         break;
     }
   }

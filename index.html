@@ -43,6 +43,13 @@
         <button class="tool-btn" data-tool="text" title="Text (T)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,7 4,4 20,4 20,7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
         </button>
+        <button class="tool-btn" data-tool="pencil" title="Pencil (P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="tool-btn" data-tool="hand" title="Hand / Pan (H)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0m0 0v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+        </button>
       </aside>
 
       <!-- Bottom-right zoom controls -->
@@ -60,6 +67,8 @@
         <div class="actions-divider"></div>
         <button id="btn-export" title="Export JSON">⬇ Export</button>
         <button id="btn-import" title="Import JSON">⬆ Import</button>
+        <div class="actions-divider"></div>
+        <button id="btn-theme" title="Toggle dark mode">☀️</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

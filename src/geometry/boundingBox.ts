@@ -1,10 +1,10 @@
-import type { DrawableElement, ArrowElement, LineElement } from '../types/elements';
+import type { DrawableElement, ArrowElement, LineElement, PencilElement } from '../types/elements';
 import type { BoundingBox } from '../types/geometry';
 import { rotatePoint } from './transform';
 
 export function getBoundingBox(element: DrawableElement): BoundingBox {
-  if (element.type === 'arrow' || element.type === 'line') {
-    return getPolylineBoundingBox(element as ArrowElement | LineElement);
+  if (element.type === 'arrow' || element.type === 'line' || element.type === 'pencil') {
+    return getPolylineBoundingBox(element as ArrowElement | LineElement | PencilElement);
   }
   if (element.angle === 0) {
     return {
@@ -35,7 +35,7 @@ function getRotatedBoundingBox(element: DrawableElement): BoundingBox {
   };
 }
 
-function getPolylineBoundingBox(element: ArrowElement | LineElement): BoundingBox {
+function getPolylineBoundingBox(element: ArrowElement | LineElement | PencilElement): BoundingBox {
   const xs = element.points.map((p) => p.x);
   const ys = element.points.map((p) => p.y);
   return {

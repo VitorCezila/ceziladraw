@@ -6,7 +6,8 @@ export type ElementType =
   | 'ellipse'
   | 'arrow'
   | 'line'
-  | 'text';
+  | 'text'
+  | 'pencil';
 
 export type FillStyle = 'solid' | 'hachure' | 'cross-hatch' | 'none';
 export type CurveType = 'linear' | 'bezier';
@@ -72,13 +73,20 @@ export interface LineElement extends BaseElement {
   points: Point[];
 }
 
+export interface PencilElement extends BaseElement {
+  type: 'pencil';
+  points: Point[];
+  smoothing: number;
+}
+
 export type DrawableElement =
   | RectangleElement
   | DiamondElement
   | EllipseElement
   | TextElement
   | ArrowElement
-  | LineElement;
+  | LineElement
+  | PencilElement;
 
 export const DEFAULT_STYLE: StyleObject = {
   strokeColor: '#1e1e2e',
