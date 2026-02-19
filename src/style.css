@@ -1,0 +1,217 @@
+/* ── Reset & Base ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --border: #e5e5e3;
+  --text: #1e1e2e;
+  --text-muted: #6b7280;
+  --accent: #3b82f6;
+  --accent-light: rgba(59, 130, 246, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+}
+
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+
+/* ── App Shell ──────────────────────────────────────────── */
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Canvas Container ───────────────────────────────────── */
+#canvas-container {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+#canvas-container canvas {
+  display: block;
+  touch-action: none;
+  user-select: none;
+}
+
+#canvas-container.tool-select { cursor: default; }
+#canvas-container.tool-text   { cursor: text; }
+
+/* ── Text Editor Overlay ────────────────────────────────── */
+#text-editor-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.text-editor {
+  position: absolute;
+  pointer-events: all;
+  background: transparent;
+  border: 1.5px dashed var(--accent);
+  border-radius: 3px;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  min-width: 4px;
+  min-height: 1em;
+  padding: 2px 4px;
+  line-height: 1.4;
+  color: #1e1e2e;
+  caret-color: var(--accent);
+  white-space: pre;
+}
+
+/* ── Toolbar ────────────────────────────────────────────── */
+#toolbar {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.tool-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.tool-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.tool-btn.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.toolbar-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+/* ── Zoom Controls ──────────────────────────────────────── */
+#zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 20;
+
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+#zoom-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+#zoom-controls button:hover { background: var(--accent-light); color: var(--accent); }
+
+#zoom-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: center;
+  user-select: none;
+}
+
+/* ── Actions Panel ──────────────────────────────────────── */
+#actions-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+#actions-panel button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+#actions-panel button:hover { background: var(--accent-light); color: var(--accent); }
+#actions-panel button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+#btn-undo, #btn-redo { font-size: 16px; width: 32px; padding: 0; justify-content: center; }
+
+.actions-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 2px;
+}
