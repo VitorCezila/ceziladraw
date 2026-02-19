@@ -1,7 +1,7 @@
 import type { Tool } from './ToolManager';
 import type { Renderer } from '../renderer/Renderer';
 import type { Point, BoundingBox } from '../types/geometry';
-import type { DrawableElement } from '../types/elements';
+import type { DrawableElement, TextElement, ArrowElement, LineElement, PencilElement } from '../types/elements';
 import { getAppState, setAppState, removeElements } from '../state/appState';
 import { getUIState } from '../state/uiState';
 import { getSortedElements } from '../state/selectors';
@@ -14,6 +14,7 @@ import {
   type HandleHit,
   type ResizeHandleIndex,
 } from '../geometry/handles';
+import { computeTextHeight } from '../utils/textLayout';
 
 export class SelectTool implements Tool {
   private renderer: Renderer;
@@ -22,6 +23,7 @@ export class SelectTool implements Tool {
   private _isDragging = false;
   private _dragStartWorld: Point = { x: 0, y: 0 };
   private _elementStartPositions = new Map<string, { x: number; y: number }>();
+  private _pointsStartPositions = new Map<string, Point[]>();
 
   // Marquee state
   private _isMarquee = false;
@@ -92,7 +94,14 @@ export class SelectTool implements Tool {
 
       getAppState().selectedIds.forEach((id) => {
         const el = getAppState().elements.get(id);
-        if (el) this._elementStartPositions.set(id, { x: el.x, y: el.y });
+        if (!el) return;
+        this._elementStartPositions.set(id, { x: el.x, y: el.y });
+        if (el.type === 'arrow' || el.type === 'line' || el.type === 'pencil') {
+          this._pointsStartPositions.set(
+            id,
+            (el as ArrowElement | LineElement | PencilElement).points.map((p) => ({ ...p })),
+          );
+        }
       });
     } else {
       if (!e.shiftKey) setAppState({ selectedIds: new Set() });
@@ -134,17 +143,26 @@ export class SelectTool implements Tool {
       this._resizingId !== null
     ) {
       this._elementsMutated = true;
-      const newGeom = applyResize(
+      let newGeom = applyResize(
         this._resizeStartEl,
         this._activeHandle.index,
         point,
       );
       const el = getAppState().elements.get(this._resizingId);
       if (el) {
+        // For text elements, recompute height based on wrapped lines at the new width
+        if (el.type === 'text') {
+          const textEl = el as TextElement;
+          newGeom = {
+            ...newGeom,
+            height: computeTextHeight(textEl.text, newGeom.width, textEl.fontSize, textEl.fontFamily),
+          };
+        }
         const elements = new Map(getAppState().elements);
         elements.set(this._resizingId, { ...el, ...newGeom });
         setAppState({ elements });
       }
+      this.renderer.renderScene();
       this.renderer.renderInteraction(null);
       return;
     }
@@ -166,6 +184,7 @@ export class SelectTool implements Tool {
         });
         setAppState({ elements });
       }
+      this.renderer.renderScene();
       this.renderer.renderInteraction(null);
       return;
     }
@@ -181,11 +200,21 @@ export class SelectTool implements Tool {
         if (!start) return;
         const el = getAppState().elements.get(id);
         if (!el) return;
+        const startPts = this._pointsStartPositions.get(id);
+        const newEl = startPts
+          ? {
+              ...el,
+              x: start.x + dx,
+              y: start.y + dy,
+              points: startPts.map((p) => ({ x: p.x + dx, y: p.y + dy })),
+            }
+          : { ...el, x: start.x + dx, y: start.y + dy };
         const elements = new Map(getAppState().elements);
-        elements.set(id, { ...el, x: start.x + dx, y: start.y + dy });
+        elements.set(id, newEl as DrawableElement);
         setAppState({ elements });
       });
 
+      this.renderer.renderScene();
       this.renderer.renderInteraction(null);
       return;
     }
@@ -245,6 +274,7 @@ export class SelectTool implements Tool {
     this._isDragging = false;
     this._isMarquee = false;
     this._elementStartPositions.clear();
+    this._pointsStartPositions.clear();
     this._beforeSnapshot = null;
     this._elementsMutated = false;
     this._activeHandle = null;

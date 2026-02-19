@@ -7,6 +7,7 @@ import { addElement } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import { generateId, generateSeed } from '../utils/id';
 import { getMaxZIndex } from '../state/selectors';
+import { computeTextHeight } from '../utils/textLayout';
 
 const FONT_SIZE = 20;
 const FONT_FAMILY = 'Virgil, "Comic Sans MS", cursive';
@@ -96,7 +97,9 @@ export class TextTool implements Tool {
     const text = this._textarea.value.trim();
 
     if (text.length > 0) {
-      const el = { ...this._currentElement, text };
+      const base = this._currentElement;
+      const height = computeTextHeight(text, base.width, base.fontSize, base.fontFamily);
+      const el = { ...base, text, height };
       const before = snapshotElements();
       addElement(el);
       pushHistory({ elements: before }, { elements: snapshotElements() });

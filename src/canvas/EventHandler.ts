@@ -87,11 +87,9 @@ export class EventHandler {
 
     if (e.ctrlKey || e.metaKey) {
       const delta = -e.deltaY * 0.01;
-      const newZoom = viewport.zoom * (1 + delta);
+      const newZoom = Math.max(0.05, Math.min(20, viewport.zoom * (1 + delta)));
       const rect = this.canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      setViewport(zoomOnPoint(viewport, mouseX, mouseY, newZoom));
+      setViewport(zoomOnPoint(viewport, e.clientX - rect.left, e.clientY - rect.top, newZoom));
     } else {
       setViewport({
         x: viewport.x - e.deltaX,

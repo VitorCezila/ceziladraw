@@ -3,7 +3,6 @@ import type { EllipseElement } from '../types/elements';
 import { RectangleTool } from './RectangleTool';
 import { getUIState } from '../state/uiState';
 import { generateId, generateSeed } from '../utils/id';
-import { DEFAULT_STYLE } from '../types/elements';
 import { getMaxZIndex } from '../state/selectors';
 
 export class EllipseTool extends RectangleTool {
@@ -21,7 +20,7 @@ export class EllipseTool extends RectangleTool {
       angle: 0,
       zIndex: getMaxZIndex() + 1,
       groupId: null,
-      style: { ...DEFAULT_STYLE },
+      style: { ...getUIState().activeStyle },
       version: 0,
       seed: provisionalElement?.seed ?? generateSeed(),
     };

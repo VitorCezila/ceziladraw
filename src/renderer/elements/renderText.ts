@@ -1,4 +1,5 @@
 import type { TextElement } from '../../types/elements';
+import { wrapTextLines } from '../../utils/textLayout';
 
 export function renderText(ctx: CanvasRenderingContext2D, element: TextElement): void {
   ctx.save();
@@ -8,7 +9,7 @@ export function renderText(ctx: CanvasRenderingContext2D, element: TextElement):
   ctx.textAlign = element.textAlign;
   ctx.textBaseline = 'top';
 
-  const lines = element.text.split('\n');
+  const lines = wrapTextLines(element.text, element.width, element.fontSize, element.fontFamily);
   const lineHeight = element.fontSize * 1.4;
   const startX =
     element.textAlign === 'center'

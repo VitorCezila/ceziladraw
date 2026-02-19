@@ -598,3 +598,118 @@ Wired in `EventHandler._onKeyDown`:
 - `Ctrl+V` → `pasteClipboard()` + full render
 
 Pasting repeatedly cascades the offset so each paste is visually distinct.
+
+---
+
+## 13. Selection Overlay Visual System
+
+_Last updated: Wave 5 (Purple Selection, Zoom Simplification)_
+
+### 13.1 Color Palette
+
+All selection chrome uses a single purple constant defined at the top of `src/renderer/InteractionRenderer.ts`:
+
+```ts
+const HANDLE_COLOR   = '#6965db';  // Excalidraw purple
+const SELECTION_COLOR = '#6965db';
+```
+
+The toolbar and button UI uses `--accent: #3b82f6` (blue) — these are intentionally separate. The canvas selection overlay is independent of CSS custom properties.
+
+### 13.2 Selection Border
+
+Drawn in `_drawSelectionOutline` inside the element's rotated coordinate frame:
+
+| Property | Value |
+|---|---|
+| Color | `#6965db` |
+| Line style | **Solid** (no dash pattern) |
+| Line width | `1.5 / zoom` px (stays visually constant regardless of zoom level) |
+| Padding | `4 / zoom` px gap between element bounding box and selection border |
+
+The transform applied before drawing:
+```ts
+ctx.translate(cx, cy);
+ctx.rotate(el.angle);
+ctx.translate(-cx, -cy);
+// all drawing is in rotated space → border follows element rotation
+```
+
+### 13.3 Resize Handles
+
+Eight square handles at corners (TL/TR/BR/BL) and edge midpoints (TC/MR/BC/ML):
+
+| Property | Value |
+|---|---|
+| Shape | Square (`fillRect` / `strokeRect`) |
+| Size | `8 / zoom` px |
+| Fill | White (`#fff`) |
+| Border | `#6965db`, 1.5 / zoom px |
+
+Handles are positioned at the corners/midpoints of the padded selection rect (same local-space frame as the border).
+
+### 13.4 Rotation Handle
+
+One circular handle centered `20 / zoom` px above the TC midpoint:
+
+| Property | Value |
+|---|---|
+| Shape | Circle (`arc`, full fill) |
+| Radius | `4 / zoom` px |
+| Fill | `#6965db` (solid purple) |
+
+### 13.5 Marquee Selection
+
+Drawn in screen space (outside the viewport transform) in `_drawMarquee`:
+
+| Property | Value |
+|---|---|
+| Border | `#6965db`, dashed `[4, 3]`, 1 px |
+| Fill | `rgba(105, 101, 219, 0.06)` — very translucent purple tint |
+
+---
+
+## 14. Zoom System
+
+### 14.1 Cursor-Centered Zoom (Direct)
+
+Zoom is applied immediately on each `WheelEvent` — no animation or interpolation:
+
+```ts
+// In EventHandler._onWheel (Ctrl+scroll):
+const delta   = -e.deltaY * 0.01;               // softer than raw deltaY
+const newZoom = clamp(viewport.zoom * (1 + delta), 0.05, 20);
+setViewport(zoomOnPoint(viewport, mouseX, mouseY, newZoom));
+```
+
+`zoomOnPoint` in `src/geometry/transform.ts` preserves the world point under the cursor:
+
+```ts
+const worldPoint = screenToWorld(mouseX, mouseY, viewport);
+return {
+  zoom: newZoom,
+  x: mouseX - worldPoint.x * newZoom,
+  y: mouseY - worldPoint.y * newZoom,
+};
+```
+
+**Invariant:** the world coordinate that was under the cursor before the wheel event remains under the cursor after it.
+
+### 14.2 Pan via Scroll
+
+Plain (non-Ctrl) scroll moves the viewport directly:
+
+```ts
+setViewport({ x: viewport.x - e.deltaX, y: viewport.y - e.deltaY });
+```
+
+No animation; one frame of `requestFullRender()` is triggered immediately.
+
+### 14.3 Zoom Bounds
+
+| Limit | Value |
+|---|---|
+| Minimum zoom | `0.05` (5%) |
+| Maximum zoom | `20` (2000%) |
+
+Enforced via `Math.max(0.05, Math.min(20, newZoom))` in the wheel handler.

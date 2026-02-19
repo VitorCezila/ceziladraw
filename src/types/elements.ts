@@ -92,7 +92,7 @@ export const DEFAULT_STYLE: StyleObject = {
   strokeColor: '#1e1e2e',
   strokeWidth: 2,
   fillColor: 'transparent',
-  fillStyle: 'hachure',
+  fillStyle: 'solid',
   roughness: 1.2,
   opacity: 1.0,
 };

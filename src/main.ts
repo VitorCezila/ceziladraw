@@ -9,7 +9,7 @@ import { subscribeToUIState, setViewport, setActiveStyle, getUIState } from './s
 import { undo, redo, canUndo, canRedo, subscribeToHistory, snapshotElements, pushHistory } from './state/history';
 import { zoomOnPoint } from './geometry/transform';
 import { initTheme, toggleTheme, getTheme, getDefaultStrokeColor } from './utils/theme';
-import type { TextElement, TextAlign } from './types/elements';
+import type { TextElement, TextAlign, StyleObject, DrawableElement } from './types/elements';
 
 const ZOOM_STEP = 0.15;
 
@@ -143,12 +143,28 @@ function main() {
     setTimeout(() => renderer.requestFullRender(), 300);
   });
 
+  // ── Style helper — apply to activeStyle AND any selected elements ────
+  function applyStyleToSelected(patch: Partial<StyleObject>): void {
+    setActiveStyle(patch);
+    const { selectedIds } = getAppState();
+    if (selectedIds.size === 0) return;
+    const before = snapshotElements();
+    let mutated = false;
+    selectedIds.forEach((id) => {
+      const el = getAppState().elements.get(id);
+      if (!el) return;
+      updateElement(id, { style: { ...el.style, ...patch } } as Partial<DrawableElement>);
+      mutated = true;
+    });
+    if (mutated) pushHistory({ elements: before }, { elements: snapshotElements() });
+  }
+
   // ── Style panel — stroke color ───────────────────────────
   strokeSwatches.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-color]');
     if (!btn) return;
     const color = btn.dataset.color!;
-    setActiveStyle({ strokeColor: color });
+    applyStyleToSelected({ strokeColor: color });
     strokeCustom.value = color === 'transparent' ? '#000000' : color;
     strokeSwatches.querySelectorAll('.swatch').forEach((s) =>
       s.classList.toggle('active', s === btn),
@@ -156,7 +172,7 @@ function main() {
   });
 
   strokeCustom.addEventListener('input', () => {
-    setActiveStyle({ strokeColor: strokeCustom.value });
+    applyStyleToSelected({ strokeColor: strokeCustom.value });
     strokeSwatches.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
   });
 
@@ -165,7 +181,7 @@ function main() {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-color]');
     if (!btn) return;
     const color = btn.dataset.color!;
-    setActiveStyle({ fillColor: color });
+    applyStyleToSelected({ fillColor: color });
     if (color !== 'transparent') fillCustom.value = color;
     fillSwatches.querySelectorAll('.swatch').forEach((s) =>
       s.classList.toggle('active', s === btn),
@@ -173,7 +189,7 @@ function main() {
   });
 
   fillCustom.addEventListener('input', () => {
-    setActiveStyle({ fillColor: fillCustom.value });
+    applyStyleToSelected({ fillColor: fillCustom.value });
     fillSwatches.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
   });
 
@@ -181,7 +197,7 @@ function main() {
   strokeWidthBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const width = Number(btn.dataset.width);
-      setActiveStyle({ strokeWidth: width });
+      applyStyleToSelected({ strokeWidth: width });
       strokeWidthBtns.forEach((b) => b.classList.toggle('active', b === btn));
     });
   });

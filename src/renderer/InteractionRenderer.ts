@@ -10,8 +10,8 @@ import { renderArrow, renderLine } from './elements/renderArrow';
 import { renderPencil } from './elements/renderPencil';
 
 const HANDLE_SIZE = 8;
-const HANDLE_COLOR = '#3b82f6';
-const SELECTION_COLOR = '#3b82f6';
+const HANDLE_COLOR = '#6965db';
+const SELECTION_COLOR = '#6965db';
 
 export class InteractionRenderer {
   private canvas: HTMLCanvasElement;
@@ -100,9 +100,7 @@ export class InteractionRenderer {
 
     ctx.strokeStyle = SELECTION_COLOR;
     ctx.lineWidth = 1.5 / zoom;
-    ctx.setLineDash([4 / zoom, 3 / zoom]);
     ctx.strokeRect(el.x - pad, el.y - pad, el.width + pad * 2, el.height + pad * 2);
-    ctx.setLineDash([]);
 
     this._drawResizeHandles(el, pad, zoom);
     ctx.restore();
@@ -154,7 +152,7 @@ export class InteractionRenderer {
 
     ctx.save();
     ctx.strokeStyle = SELECTION_COLOR;
-    ctx.fillStyle = 'rgba(59, 130, 246, 0.06)';
+    ctx.fillStyle = 'rgba(105, 101, 219, 0.06)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 3]);
     ctx.fillRect(sx, sy, sw, sh);
