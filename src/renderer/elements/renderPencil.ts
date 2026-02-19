@@ -1,5 +1,11 @@
 import type { PencilElement } from '../../types/elements';
 
+function strokeLineDash(style: string): number[] {
+  if (style === 'dashed') return [10, 6];
+  if (style === 'dotted') return [2, 6];
+  return [];
+}
+
 export function renderPencil(ctx: CanvasRenderingContext2D, element: PencilElement): void {
   const { points } = element;
   if (points.length < 2) return;
@@ -10,6 +16,7 @@ export function renderPencil(ctx: CanvasRenderingContext2D, element: PencilEleme
   ctx.lineWidth = element.style.strokeWidth;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
+  ctx.setLineDash(strokeLineDash(element.style.strokeStyle ?? 'solid'));
 
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);

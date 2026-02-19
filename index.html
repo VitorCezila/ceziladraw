@@ -19,25 +19,8 @@
       <!-- Floating text editor spawned by TextTool -->
       <div id="text-editor-container"></div>
 
-      <!-- Text format panel (appears above selected text element) -->
-      <div id="text-format-panel">
-        <button class="fmt-btn active" data-size="14" title="Small">S</button>
-        <button class="fmt-btn" data-size="20" title="Medium">M</button>
-        <button class="fmt-btn" data-size="28" title="Large">L</button>
-        <div class="fmt-divider"></div>
-        <button class="fmt-btn" data-align="left" title="Align left">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="12" y2="12"/></svg>
-        </button>
-        <button class="fmt-btn" data-align="center" title="Align center">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/></svg>
-        </button>
-        <button class="fmt-btn" data-align="right" title="Align right">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="4" y1="12" x2="14" y2="12"/></svg>
-        </button>
-      </div>
-
-      <!-- Left toolbar -->
-      <aside id="toolbar" aria-label="Drawing tools">
+      <!-- Top toolbar (horizontal) -->
+      <nav id="toolbar" aria-label="Drawing tools">
         <button class="tool-btn active" data-tool="select" title="Select (V)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg>
         </button>
@@ -57,76 +40,210 @@
         <button class="tool-btn" data-tool="line" title="Line (L)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg>
         </button>
-        <button class="tool-btn" data-tool="text" title="Text (T)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,7 4,4 20,4 20,7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-        </button>
         <button class="tool-btn" data-tool="pencil" title="Pencil (P)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="text" title="Text (T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,7 4,4 20,4 20,7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
         </button>
         <div class="toolbar-divider"></div>
         <button class="tool-btn" data-tool="hand" title="Hand / Pan (H)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0m0 0v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
         </button>
-      </aside>
+      </nav>
 
-      <!-- Style panel (bottom center) -->
-      <div id="style-panel">
-        <!-- Stroke color -->
-        <div class="style-section">
-          <span class="style-label">Stroke</span>
-          <div class="color-swatches" id="stroke-swatches">
-            <button class="swatch active" data-color="#1e1e2e" style="--sw-color:#1e1e2e" title="Dark"></button>
-            <button class="swatch" data-color="#585b70" style="--sw-color:#585b70" title="Gray"></button>
+      <!-- Left properties panel -->
+      <aside id="properties-panel">
+
+        <!-- ── Stroke color ── -->
+        <div class="prop-section" data-section="stroke">
+          <span class="prop-label">Stroke</span>
+          <div class="prop-row color-swatches" id="stroke-swatches">
+            <button class="swatch" data-color="#ffffff" style="--sw-color:#ffffff" title="White"></button>
             <button class="swatch" data-color="#ef4444" style="--sw-color:#ef4444" title="Red"></button>
-            <button class="swatch" data-color="#f97316" style="--sw-color:#f97316" title="Orange"></button>
-            <button class="swatch" data-color="#eab308" style="--sw-color:#eab308" title="Yellow"></button>
             <button class="swatch" data-color="#22c55e" style="--sw-color:#22c55e" title="Green"></button>
             <button class="swatch" data-color="#3b82f6" style="--sw-color:#3b82f6" title="Blue"></button>
-            <button class="swatch" data-color="#a855f7" style="--sw-color:#a855f7" title="Purple"></button>
+            <button class="swatch" data-color="#f97316" style="--sw-color:#f97316" title="Orange"></button>
+            <button class="swatch active" data-color="#1e1e2e" style="--sw-color:#1e1e2e" title="Dark"></button>
           </div>
-          <input type="color" id="stroke-custom" title="Custom stroke color" value="#1e1e2e">
         </div>
 
-        <div class="style-divider"></div>
-
-        <!-- Fill color -->
-        <div class="style-section">
-          <span class="style-label">Fill</span>
-          <div class="color-swatches" id="fill-swatches">
+        <!-- ── Background (fill) ── shown for shapes only -->
+        <div class="prop-section" data-section="fill">
+          <span class="prop-label">Background</span>
+          <div class="prop-row color-swatches" id="fill-swatches">
             <button class="swatch active" data-color="transparent" title="No fill">
               <svg viewBox="0 0 16 16" width="12" height="12"><line x1="2" y1="14" x2="14" y2="2" stroke="#e11d48" stroke-width="2"/></svg>
             </button>
-            <button class="swatch" data-color="#fecaca" style="--sw-color:#fecaca" title="Light red"></button>
-            <button class="swatch" data-color="#fed7aa" style="--sw-color:#fed7aa" title="Light orange"></button>
-            <button class="swatch" data-color="#fef08a" style="--sw-color:#fef08a" title="Light yellow"></button>
-            <button class="swatch" data-color="#bbf7d0" style="--sw-color:#bbf7d0" title="Light green"></button>
-            <button class="swatch" data-color="#bfdbfe" style="--sw-color:#bfdbfe" title="Light blue"></button>
-            <button class="swatch" data-color="#e9d5ff" style="--sw-color:#e9d5ff" title="Light purple"></button>
+            <button class="swatch" data-color="#ef4444" style="--sw-color:#ef4444" title="Red"></button>
+            <button class="swatch" data-color="#22c55e" style="--sw-color:#22c55e" title="Green"></button>
+            <button class="swatch" data-color="#3b82f6" style="--sw-color:#3b82f6" title="Blue"></button>
+            <button class="swatch" data-color="#f97316" style="--sw-color:#f97316" title="Orange"></button>
+            <button class="swatch" data-color="#6b3e00" style="--sw-color:#6b3e00" title="Brown"></button>
+            <button class="swatch" id="fill-checker" data-color="checker" title="Transparent pattern">
+              <svg viewBox="0 0 16 16" width="12" height="12">
+                <rect x="0" y="0" width="8" height="8" fill="#999"/>
+                <rect x="8" y="8" width="8" height="8" fill="#999"/>
+              </svg>
+            </button>
           </div>
-          <input type="color" id="fill-custom" title="Custom fill color" value="#bfdbfe">
         </div>
 
-        <div class="style-divider"></div>
-
-        <!-- Stroke width -->
-        <div class="style-section">
-          <span class="style-label">Width</span>
-          <div class="stroke-widths">
-            <button class="sw-btn" data-width="1" title="Thin (1px)">
+        <!-- ── Stroke width ── shown for shapes -->
+        <div class="prop-section" data-section="stroke-width">
+          <span class="prop-label">Stroke width</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn sw-btn" data-width="1" title="Thin">
               <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </button>
-            <button class="sw-btn active" data-width="2" title="Medium (2px)">
+            <button class="prop-btn sw-btn active" data-width="2" title="Medium">
               <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
             </button>
-            <button class="sw-btn" data-width="3" title="Thick (3px)">
+            <button class="prop-btn sw-btn" data-width="3" title="Thick">
               <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>
-            </button>
-            <button class="sw-btn" data-width="4" title="Extra thick (4px)">
-              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
             </button>
           </div>
         </div>
-      </div>
+
+        <!-- ── Stroke style ── shown for shapes -->
+        <div class="prop-section" data-section="stroke-style">
+          <span class="prop-label">Stroke style</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn ss-btn active" data-stroke-style="solid" title="Solid">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <button class="prop-btn ss-btn" data-stroke-style="dashed" title="Dashed">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="5,3" stroke-linecap="round"/></svg>
+            </button>
+            <button class="prop-btn ss-btn" data-stroke-style="dotted" title="Dotted">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="2,4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Sloppiness (roughness) ── shown for shapes -->
+        <div class="prop-section" data-section="sloppiness">
+          <span class="prop-label">Sloppiness</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn rough-btn" data-roughness="0" title="Architect">
+              <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6 L22 6"/></svg>
+            </button>
+            <button class="prop-btn rough-btn active" data-roughness="1.2" title="Artist">
+              <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7 C6 4, 10 9, 14 6 S20 5, 22 6"/></svg>
+            </button>
+            <button class="prop-btn rough-btn" data-roughness="2.5" title="Cartoonist">
+              <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8 C5 3, 8 10, 12 5 S18 9, 22 4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Edges ── shown for rect only -->
+        <div class="prop-section" data-section="edges">
+          <span class="prop-label">Edges</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn edge-btn active" data-corner-style="sharp" title="Sharp">
+              <svg viewBox="0 0 24 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="0"/></svg>
+            </button>
+            <button class="prop-btn edge-btn" data-corner-style="round" title="Round">
+              <svg viewBox="0 0 24 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Font family ── shown for text only -->
+        <div class="prop-section" data-section="font-family">
+          <span class="prop-label">Font family</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn ff-btn active" data-font-family="cursive" title="Handwritten">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19 C8 5 16 5 20 19"/><line x1="7" y1="13" x2="17" y2="13"/></svg>
+            </button>
+            <button class="prop-btn ff-btn" data-font-family="sans-serif" title="Normal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="5" x2="5" y2="19"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="12" x2="14" y2="12"/></svg>
+            </button>
+            <button class="prop-btn ff-btn" data-font-family="monospace" title="Code">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="8,9 4,12 8,15"/><polyline points="16,9 20,12 16,15"/><line x1="12" y1="6" x2="11" y2="18"/></svg>
+            </button>
+            <button class="prop-btn ff-btn" data-font-family="serif" title="Serif">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="8" y1="5" x2="16" y2="5"/><line x1="9" y1="19" x2="15" y2="19"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Font size ── shown for text only -->
+        <div class="prop-section" data-section="font-size">
+          <span class="prop-label">Font size</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn fs-btn" data-size="14" title="Small">S</button>
+            <button class="prop-btn fs-btn active" data-size="20" title="Medium">M</button>
+            <button class="prop-btn fs-btn" data-size="28" title="Large">L</button>
+            <button class="prop-btn fs-btn" data-size="36" title="Extra Large">XL</button>
+          </div>
+        </div>
+
+        <!-- ── Text align ── shown for text only -->
+        <div class="prop-section" data-section="text-align">
+          <span class="prop-label">Text align</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn ta-btn active" data-align="left" title="Left">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="12" y2="12"/></svg>
+            </button>
+            <button class="prop-btn ta-btn" data-align="center" title="Center">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/></svg>
+            </button>
+            <button class="prop-btn ta-btn" data-align="right" title="Right">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="4" y1="12" x2="14" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Opacity ── always shown when element selected -->
+        <div class="prop-section" data-section="opacity">
+          <span class="prop-label">Opacity</span>
+          <div class="prop-row opacity-row">
+            <input type="range" id="opacity-slider" min="0" max="100" value="100" />
+            <div class="opacity-labels">
+              <span>0</span>
+              <span id="opacity-value">100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Layers ── always shown when element selected -->
+        <div class="prop-section" data-section="layers">
+          <span class="prop-label">Layers</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn layer-btn" id="btn-send-back" title="Send to back">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="10" height="10" rx="1"/><rect x="9" y="3" width="10" height="10" rx="1" fill="var(--surface)" stroke-width="1.5"/><polyline points="13,7 13,3 17,3"/></svg>
+            </button>
+            <button class="prop-btn layer-btn" id="btn-send-backward" title="Send backward">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="10" height="10" rx="1"/><rect x="9" y="3" width="10" height="10" rx="1" fill="var(--surface)" stroke-width="1.5"/><line x1="14" y1="7" x2="14" y2="3"/><polyline points="11,6 14,3 17,6"/></svg>
+            </button>
+            <button class="prop-btn layer-btn" id="btn-bring-forward" title="Bring forward">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="7" width="10" height="10" rx="1"/><rect x="1" y="3" width="10" height="10" rx="1" fill="var(--surface)" stroke-width="1.5"/><line x1="6" y1="7" x2="6" y2="11"/><polyline points="3,8 6,11 9,8"/></svg>
+            </button>
+            <button class="prop-btn layer-btn" id="btn-bring-front" title="Bring to front">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="7" width="10" height="10" rx="1"/><rect x="1" y="3" width="10" height="10" rx="1" fill="var(--surface)" stroke-width="1.5"/><polyline points="3,6 6,9 9,6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Actions ── always shown when element selected -->
+        <div class="prop-section" data-section="actions">
+          <span class="prop-label">Actions</span>
+          <div class="prop-row btn-group">
+            <button class="prop-btn action-btn" id="btn-duplicate" title="Duplicate">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="11" height="11" rx="1"/><path d="M3 14V3h11"/></svg>
+            </button>
+            <button class="prop-btn action-btn" id="btn-delete" title="Delete">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,6 16,6"/><path d="M7 6V4h6v2"/><rect x="5" y="6" width="10" height="11" rx="1"/><line x1="8" y1="9" x2="8" y2="14"/><line x1="12" y1="9" x2="12" y2="14"/></svg>
+            </button>
+            <button class="prop-btn action-btn" id="btn-link" title="Copy link">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12a4 4 0 0 0 5.66 0l2-2a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M12 8a4 4 0 0 0-5.66 0l-2 2a4 4 0 0 0 5.66 5.66l1-1"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </aside>
 
       <!-- Bottom-right zoom controls -->
       <div id="zoom-controls">

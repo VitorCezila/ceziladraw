@@ -2,6 +2,12 @@ import type { ArrowElement, LineElement } from '../../types/elements';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import type { Point } from '../../types/geometry';
 
+function strokeLineDash(style: string): number[] {
+  if (style === 'dashed') return [10, 6];
+  if (style === 'dotted') return [2, 6];
+  return [];
+}
+
 export function renderArrow(
   rc: RoughCanvas,
   ctx: CanvasRenderingContext2D,
@@ -31,12 +37,14 @@ export function renderLine(rc: RoughCanvas, element: LineElement): void {
 }
 
 function _drawPolyline(rc: RoughCanvas, element: ArrowElement, points: Point[]): void {
+  const lineDash = strokeLineDash(element.style.strokeStyle ?? 'solid');
   for (let i = 0; i < points.length - 1; i++) {
     rc.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, {
       stroke: element.style.strokeColor,
       strokeWidth: element.style.strokeWidth,
       roughness: element.style.roughness,
       seed: element.seed + i,
+      strokeLineDash: lineDash,
     });
   }
 }

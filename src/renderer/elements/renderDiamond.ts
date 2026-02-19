@@ -2,6 +2,12 @@ import type { DiamondElement } from '../../types/elements';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import { isTransparent } from '../../utils/color';
 
+function strokeLineDash(style: string): number[] {
+  if (style === 'dashed') return [10, 6];
+  if (style === 'dotted') return [2, 6];
+  return [];
+}
+
 export function renderDiamond(rc: RoughCanvas, element: DiamondElement): void {
   const { x, y, width, height } = element;
   const cx = x + width / 2;
@@ -21,5 +27,6 @@ export function renderDiamond(rc: RoughCanvas, element: DiamondElement): void {
     fillStyle: element.style.fillStyle === 'none' ? 'solid' : element.style.fillStyle,
     roughness: element.style.roughness,
     seed: element.seed,
+    strokeLineDash: strokeLineDash(element.style.strokeStyle ?? 'solid'),
   });
 }

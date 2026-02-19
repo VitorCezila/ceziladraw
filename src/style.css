@@ -52,6 +52,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 }
 
 #canvas-container.tool-select  { cursor: default; }
+#canvas-container.tool-select.element-hovered { cursor: move; }
 #canvas-container.tool-text    { cursor: text; }
 #canvas-container.tool-hand    { cursor: grab; }
 #canvas-container.tool-hand.dragging { cursor: grabbing; }
@@ -82,19 +83,19 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
   white-space: pre;
 }
 
-/* ── Toolbar ────────────────────────────────────────────── */
+/* ── Top Toolbar (horizontal) ───────────────────────────── */
 #toolbar {
   position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 20;
 
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding: 8px 6px;
+  gap: 2px;
+  padding: 6px 8px;
 
   background: var(--surface);
   border: 1px solid var(--border);
@@ -106,8 +107,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -133,10 +134,162 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 }
 
 .toolbar-divider {
-  width: 24px;
-  height: 1px;
+  width: 1px;
+  height: 22px;
   background: var(--border);
-  margin: 2px 0;
+  margin: 0 4px;
+}
+
+/* ── Left Properties Panel ──────────────────────────────── */
+#properties-panel {
+  position: absolute;
+  left: 12px;
+  top: 68px;
+  width: 186px;
+  z-index: 20;
+
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 10px 10px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+#properties-panel.visible {
+  display: flex;
+}
+
+/* ── Properties Sections ────────────────────────────────── */
+.prop-section {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prop-section:last-child {
+  border-bottom: none;
+}
+
+.prop-section.show {
+  display: flex;
+}
+
+.prop-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+/* ── Color Swatches ─────────────────────────────────────── */
+.color-swatches {
+  gap: 4px;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+  background-color: var(--sw-color, var(--surface));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  flex-shrink: 0;
+}
+
+.swatch:hover { transform: scale(1.15); border-color: var(--accent); }
+
+.swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+/* ── Button Group ───────────────────────────────────────── */
+.btn-group {
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.prop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 6px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  flex-shrink: 0;
+}
+
+.prop-btn svg {
+  width: 18px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.prop-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.prop-btn.active {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Stroke width buttons ───────────────────────────────── */
+.sw-btn svg { width: 28px; height: 12px; }
+
+/* ── Font size buttons ──────────────────────────────────── */
+.fs-btn { min-width: 32px; }
+
+/* ── Opacity slider ─────────────────────────────────────── */
+.opacity-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+#opacity-slider {
+  width: 100%;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.opacity-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 /* ── Zoom Controls ──────────────────────────────────────── */
@@ -186,8 +339,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 /* ── Actions Panel ──────────────────────────────────────── */
 #actions-panel {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   z-index: 20;
 
   display: flex;
@@ -239,151 +392,3 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 }
 
 #btn-theme:hover { transform: rotate(20deg); }
-
-/* ── Style Panel ────────────────────────────────────────── */
-#style-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  white-space: nowrap;
-}
-
-.style-section {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.style-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-width: 34px;
-}
-
-.style-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--border);
-}
-
-.color-swatches {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.swatch {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1.5px solid var(--border);
-  background-color: var(--sw-color, var(--surface));
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-  flex-shrink: 0;
-}
-
-.swatch:hover { transform: scale(1.2); border-color: var(--accent); }
-
-.swatch.active {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-light);
-}
-
-#stroke-custom,
-#fill-custom {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  border: 1.5px solid var(--border);
-  cursor: pointer;
-  padding: 1px;
-  background: transparent;
-  flex-shrink: 0;
-}
-
-.stroke-widths {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.sw-btn {
-  width: 38px;
-  height: 28px;
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 5px;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
-}
-
-.sw-btn svg { width: 24px; height: 12px; }
-.sw-btn:hover { background: var(--accent-light); color: var(--accent); }
-.sw-btn.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
-
-/* ── Text Format Panel ──────────────────────────────────── */
-#text-format-panel {
-  position: absolute;
-  z-index: 25;
-  display: none;
-
-  align-items: center;
-  gap: 4px;
-  padding: 5px 8px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-}
-
-#text-format-panel.visible { display: flex; }
-
-.fmt-btn {
-  height: 28px;
-  padding: 0 10px;
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
-  white-space: nowrap;
-}
-
-.fmt-btn:hover { background: var(--accent-light); color: var(--accent); }
-.fmt-btn.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
-
-.fmt-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-  margin: 0 2px;
-}

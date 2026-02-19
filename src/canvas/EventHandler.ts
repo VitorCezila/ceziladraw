@@ -6,9 +6,12 @@ import { getAppState, setAppState } from '../state/appState';
 import { screenToWorld, zoomOnPoint } from '../geometry/transform';
 import { undo, redo } from '../state/history';
 import { copySelected, pasteClipboard } from '../state/clipboard';
+import { getSortedElements } from '../state/selectors';
+import { hitTestElementForHover } from '../geometry/hitDetection';
 
 export class EventHandler {
   private canvas: HTMLCanvasElement;
+  private container: HTMLElement;
   private toolManager: ToolManager;
   private renderer: Renderer;
   private _isPointerDown = false;
@@ -18,8 +21,10 @@ export class EventHandler {
     canvas: HTMLCanvasElement,
     toolManager: ToolManager,
     renderer: Renderer,
+    container: HTMLElement,
   ) {
     this.canvas = canvas;
+    this.container = container;
     this.toolManager = toolManager;
     this.renderer = renderer;
     this._bind();
@@ -31,6 +36,7 @@ export class EventHandler {
     c.addEventListener('pointermove', this._onPointerMove);
     c.addEventListener('pointerup', this._onPointerUp);
     c.addEventListener('pointercancel', this._onPointerUp);
+    c.addEventListener('dblclick', this._onDoubleClick);
     c.addEventListener('wheel', this._onWheel, { passive: false });
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
@@ -42,6 +48,7 @@ export class EventHandler {
     c.removeEventListener('pointermove', this._onPointerMove);
     c.removeEventListener('pointerup', this._onPointerUp);
     c.removeEventListener('pointercancel', this._onPointerUp);
+    c.removeEventListener('dblclick', this._onDoubleClick);
     c.removeEventListener('wheel', this._onWheel);
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
@@ -71,7 +78,30 @@ export class EventHandler {
 
     if (this._isPointerDown) {
       this.toolManager.onPointerMove(worldPoint, e);
+    } else {
+      this._updateHoverCursor(worldPoint);
     }
+  };
+
+  private _updateHoverCursor(worldPoint: { x: number; y: number }): void {
+    const { activeTool } = getUIState();
+    if (activeTool !== 'select') {
+      this.container.classList.remove('element-hovered');
+      return;
+    }
+
+    const { zoom } = getUIState().viewport;
+    const elements = getSortedElements();
+    const hit = elements.some((el) => hitTestElementForHover(el, worldPoint, zoom));
+    this.container.classList.toggle('element-hovered', hit);
+  }
+
+  private _onDoubleClick = (e: MouseEvent): void => {
+    const rect = this.canvas.getBoundingClientRect();
+    const { viewport } = getUIState();
+    const worldPoint = screenToWorld(e.clientX - rect.left, e.clientY - rect.top, viewport);
+    // Cast MouseEvent as PointerEvent — tools only use Point anyway
+    this.toolManager.onDoubleClick(worldPoint, e as unknown as PointerEvent);
   };
 
   private _onPointerUp = (e: PointerEvent): void => {

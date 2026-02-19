@@ -2,6 +2,12 @@ import type { EllipseElement } from '../../types/elements';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import { isTransparent } from '../../utils/color';
 
+function strokeLineDash(style: string): number[] {
+  if (style === 'dashed') return [10, 6];
+  if (style === 'dotted') return [2, 6];
+  return [];
+}
+
 export function renderEllipse(rc: RoughCanvas, element: EllipseElement): void {
   const cx = element.x + element.width / 2;
   const cy = element.y + element.height / 2;
@@ -13,5 +19,6 @@ export function renderEllipse(rc: RoughCanvas, element: EllipseElement): void {
     fillStyle: element.style.fillStyle === 'none' ? 'solid' : element.style.fillStyle,
     roughness: element.style.roughness,
     seed: element.seed,
+    strokeLineDash: strokeLineDash(element.style.strokeStyle ?? 'solid'),
   });
 }

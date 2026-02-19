@@ -5,7 +5,7 @@ import type { DrawableElement, TextElement, ArrowElement, LineElement, PencilEle
 import { getAppState, setAppState, removeElements } from '../state/appState';
 import { getUIState } from '../state/uiState';
 import { getSortedElements } from '../state/selectors';
-import { hitTestElement } from '../geometry/hitDetection';
+import { hitTestElement, hitTestElementForHover } from '../geometry/hitDetection';
 import { elementIntersectsMarquee } from '../geometry/selection';
 import { pushHistory, snapshotElements } from '../state/history';
 import {
@@ -18,6 +18,7 @@ import { computeTextHeight } from '../utils/textLayout';
 
 export class SelectTool implements Tool {
   private renderer: Renderer;
+  private _onEditText: (el: TextElement) => void;
 
   // Body-drag state
   private _isDragging = false;
@@ -47,8 +48,18 @@ export class SelectTool implements Tool {
   // Tracks whether any element was actually mutated in this gesture
   private _elementsMutated = false;
 
-  constructor(renderer: Renderer) {
+  constructor(renderer: Renderer, onEditText: (el: TextElement) => void = () => {}) {
     this.renderer = renderer;
+    this._onEditText = onEditText;
+  }
+
+  onDoubleClick(point: Point, _e: PointerEvent): void {
+    const { zoom } = getUIState().viewport;
+    const elements = getSortedElements().reverse();
+    const hit = elements.find((el) => el.type === 'text' && hitTestElement(el, point, zoom));
+    if (hit) {
+      this._onEditText(hit as TextElement);
+    }
   }
 
   onPointerDown(point: Point, e: PointerEvent): void {
@@ -74,8 +85,9 @@ export class SelectTool implements Tool {
     }
 
     // ── Phase 2: body hit test ──
+    // Uses hitTestElementForHover so that unfilled shapes are only selectable by their border
     const elements = getSortedElements().reverse();
-    const hit = elements.find((el) => hitTestElement(el, point, zoom));
+    const hit = elements.find((el) => hitTestElementForHover(el, point, zoom));
 
     if (hit) {
       if (e.shiftKey) {
@@ -150,13 +162,21 @@ export class SelectTool implements Tool {
       );
       const el = getAppState().elements.get(this._resizingId);
       if (el) {
-        // For text elements, recompute height based on wrapped lines at the new width
         if (el.type === 'text') {
-          const textEl = el as TextElement;
-          newGeom = {
-            ...newGeom,
-            height: computeTextHeight(textEl.text, newGeom.width, textEl.fontSize, textEl.fontFamily),
-          };
+          const startTextEl = this._resizeStartEl as TextElement;
+          const widthRatio = newGeom.width / startTextEl.width;
+          const newFontSize = Math.max(8, Math.round(startTextEl.fontSize * widthRatio));
+          const newHeight = computeTextHeight(
+            startTextEl.text, newGeom.width, newFontSize, startTextEl.fontFamily,
+          );
+          const elements = new Map(getAppState().elements);
+          elements.set(this._resizingId, {
+            ...el, ...newGeom, height: newHeight, fontSize: newFontSize,
+          } as DrawableElement);
+          setAppState({ elements });
+          this.renderer.renderScene();
+          this.renderer.renderInteraction(null);
+          return;
         }
         const elements = new Map(getAppState().elements);
         elements.set(this._resizingId, { ...el, ...newGeom });

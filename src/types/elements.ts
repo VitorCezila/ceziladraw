@@ -13,6 +13,8 @@ export type FillStyle = 'solid' | 'hachure' | 'cross-hatch' | 'none';
 export type CurveType = 'linear' | 'bezier';
 export type TextAlign = 'left' | 'center' | 'right';
 export type ArrowheadStyle = 'arrow' | 'dot' | 'bar' | 'none';
+export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
+export type CornerStyle = 'sharp' | 'round';
 
 export interface StyleObject {
   strokeColor: string;
@@ -21,6 +23,8 @@ export interface StyleObject {
   fillStyle: FillStyle;
   roughness: number;
   opacity: number;
+  strokeStyle: StrokeStyle;
+  cornerStyle: CornerStyle;
 }
 
 export interface BaseElement {
@@ -95,4 +99,6 @@ export const DEFAULT_STYLE: StyleObject = {
   fillStyle: 'solid',
   roughness: 1.2,
   opacity: 1.0,
+  strokeStyle: 'solid',
+  cornerStyle: 'sharp',
 };

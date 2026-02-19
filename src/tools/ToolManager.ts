@@ -1,6 +1,7 @@
 import type { ToolType } from '../types/state';
 import type { Renderer } from '../renderer/Renderer';
 import type { Point } from '../types/geometry';
+import type { TextElement } from '../types/elements';
 import { getUIState, setActiveTool } from '../state/uiState';
 import { SelectTool } from './SelectTool';
 import { RectangleTool } from './RectangleTool';
@@ -16,6 +17,7 @@ export interface Tool {
   onPointerDown(point: Point, e: PointerEvent): void;
   onPointerMove(point: Point, e: PointerEvent): void;
   onPointerUp(point: Point, e: PointerEvent): void;
+  onDoubleClick?(point: Point, e: PointerEvent): void;
   onKeyDown?(e: KeyboardEvent): void;
   cancel(): void;
 }
@@ -25,7 +27,7 @@ export class ToolManager {
 
   constructor(renderer: Renderer, textContainer: HTMLElement, canvasContainer: HTMLElement) {
     this.tools = {
-      select: new SelectTool(renderer),
+      select: new SelectTool(renderer, (el) => this.beginEditText(el)),
       rectangle: new RectangleTool(renderer),
       diamond: new DiamondTool(renderer),
       ellipse: new EllipseTool(renderer),
@@ -56,6 +58,15 @@ export class ToolManager {
 
   onPointerUp(point: Point, e: PointerEvent): void {
     this.getActiveTool().onPointerUp(point, e);
+  }
+
+  onDoubleClick(point: Point, e: PointerEvent): void {
+    this.getActiveTool().onDoubleClick?.(point, e);
+  }
+
+  beginEditText(el: TextElement): void {
+    this.setTool('text');
+    (this.tools.text as TextTool).beginEdit(el);
   }
 
   onKeyDown(e: KeyboardEvent): void {
