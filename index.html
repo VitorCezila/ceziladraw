@@ -19,6 +19,23 @@
       <!-- Floating text editor spawned by TextTool -->
       <div id="text-editor-container"></div>
 
+      <!-- Text format panel (appears above selected text element) -->
+      <div id="text-format-panel">
+        <button class="fmt-btn active" data-size="14" title="Small">S</button>
+        <button class="fmt-btn" data-size="20" title="Medium">M</button>
+        <button class="fmt-btn" data-size="28" title="Large">L</button>
+        <div class="fmt-divider"></div>
+        <button class="fmt-btn" data-align="left" title="Align left">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="12" y2="12"/></svg>
+        </button>
+        <button class="fmt-btn" data-align="center" title="Align center">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/></svg>
+        </button>
+        <button class="fmt-btn" data-align="right" title="Align right">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="4" y1="12" x2="14" y2="12"/></svg>
+        </button>
+      </div>
+
       <!-- Left toolbar -->
       <aside id="toolbar" aria-label="Drawing tools">
         <button class="tool-btn active" data-tool="select" title="Select (V)">
@@ -51,6 +68,65 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0m0 0v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
         </button>
       </aside>
+
+      <!-- Style panel (bottom center) -->
+      <div id="style-panel">
+        <!-- Stroke color -->
+        <div class="style-section">
+          <span class="style-label">Stroke</span>
+          <div class="color-swatches" id="stroke-swatches">
+            <button class="swatch active" data-color="#1e1e2e" style="--sw-color:#1e1e2e" title="Dark"></button>
+            <button class="swatch" data-color="#585b70" style="--sw-color:#585b70" title="Gray"></button>
+            <button class="swatch" data-color="#ef4444" style="--sw-color:#ef4444" title="Red"></button>
+            <button class="swatch" data-color="#f97316" style="--sw-color:#f97316" title="Orange"></button>
+            <button class="swatch" data-color="#eab308" style="--sw-color:#eab308" title="Yellow"></button>
+            <button class="swatch" data-color="#22c55e" style="--sw-color:#22c55e" title="Green"></button>
+            <button class="swatch" data-color="#3b82f6" style="--sw-color:#3b82f6" title="Blue"></button>
+            <button class="swatch" data-color="#a855f7" style="--sw-color:#a855f7" title="Purple"></button>
+          </div>
+          <input type="color" id="stroke-custom" title="Custom stroke color" value="#1e1e2e">
+        </div>
+
+        <div class="style-divider"></div>
+
+        <!-- Fill color -->
+        <div class="style-section">
+          <span class="style-label">Fill</span>
+          <div class="color-swatches" id="fill-swatches">
+            <button class="swatch active" data-color="transparent" title="No fill">
+              <svg viewBox="0 0 16 16" width="12" height="12"><line x1="2" y1="14" x2="14" y2="2" stroke="#e11d48" stroke-width="2"/></svg>
+            </button>
+            <button class="swatch" data-color="#fecaca" style="--sw-color:#fecaca" title="Light red"></button>
+            <button class="swatch" data-color="#fed7aa" style="--sw-color:#fed7aa" title="Light orange"></button>
+            <button class="swatch" data-color="#fef08a" style="--sw-color:#fef08a" title="Light yellow"></button>
+            <button class="swatch" data-color="#bbf7d0" style="--sw-color:#bbf7d0" title="Light green"></button>
+            <button class="swatch" data-color="#bfdbfe" style="--sw-color:#bfdbfe" title="Light blue"></button>
+            <button class="swatch" data-color="#e9d5ff" style="--sw-color:#e9d5ff" title="Light purple"></button>
+          </div>
+          <input type="color" id="fill-custom" title="Custom fill color" value="#bfdbfe">
+        </div>
+
+        <div class="style-divider"></div>
+
+        <!-- Stroke width -->
+        <div class="style-section">
+          <span class="style-label">Width</span>
+          <div class="stroke-widths">
+            <button class="sw-btn" data-width="1" title="Thin (1px)">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <button class="sw-btn active" data-width="2" title="Medium (2px)">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            </button>
+            <button class="sw-btn" data-width="3" title="Thick (3px)">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>
+            </button>
+            <button class="sw-btn" data-width="4" title="Extra thick (4px)">
+              <svg viewBox="0 0 24 12"><line x1="2" y1="6" x2="22" y2="6" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Bottom-right zoom controls -->
       <div id="zoom-controls">

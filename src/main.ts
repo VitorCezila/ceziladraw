@@ -4,11 +4,12 @@ import { Renderer } from './renderer/Renderer';
 import { ToolManager } from './tools/ToolManager';
 import { EventHandler } from './canvas/EventHandler';
 import { initStorage, exportToJson, importFromJson } from './storage/localStorage';
-import { getAppState, subscribeToAppState } from './state/appState';
-import { subscribeToUIState, setViewport, getUIState } from './state/uiState';
-import { undo, redo, canUndo, canRedo, subscribeToHistory } from './state/history';
+import { getAppState, updateElement, subscribeToAppState } from './state/appState';
+import { subscribeToUIState, setViewport, setActiveStyle, getUIState } from './state/uiState';
+import { undo, redo, canUndo, canRedo, subscribeToHistory, snapshotElements, pushHistory } from './state/history';
 import { zoomOnPoint } from './geometry/transform';
-import { initTheme, toggleTheme, getTheme } from './utils/theme';
+import { initTheme, toggleTheme, getTheme, getDefaultStrokeColor } from './utils/theme';
+import type { TextElement, TextAlign } from './types/elements';
 
 const ZOOM_STEP = 0.15;
 
@@ -26,6 +27,12 @@ function main() {
   const btnZoomReset = document.getElementById('zoom-reset')!;
 
   const btnTheme = document.getElementById('btn-theme')!;
+  const strokeSwatches = document.getElementById('stroke-swatches')!;
+  const fillSwatches = document.getElementById('fill-swatches')!;
+  const strokeCustom = document.getElementById('stroke-custom') as HTMLInputElement;
+  const fillCustom = document.getElementById('fill-custom') as HTMLInputElement;
+  const strokeWidthBtns = document.querySelectorAll<HTMLButtonElement>('.sw-btn');
+  const textFormatPanel = document.getElementById('text-format-panel')!;
 
   // ── Core setup ──────────────────────────────────────────
   initTheme();
@@ -120,6 +127,13 @@ function main() {
   window.addEventListener('themechange', () => {
     updateThemeBtn();
     renderer.requestFullRender();
+    // Update active stroke color to match new theme
+    const newStroke = getDefaultStrokeColor();
+    setActiveStyle({ strokeColor: newStroke });
+    strokeCustom.value = newStroke;
+    strokeSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
+      s.classList.toggle('active', s.dataset.color === newStroke);
+    });
   });
 
   // ── Export / Import ──────────────────────────────────────
@@ -129,8 +143,105 @@ function main() {
     setTimeout(() => renderer.requestFullRender(), 300);
   });
 
+  // ── Style panel — stroke color ───────────────────────────
+  strokeSwatches.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-color]');
+    if (!btn) return;
+    const color = btn.dataset.color!;
+    setActiveStyle({ strokeColor: color });
+    strokeCustom.value = color === 'transparent' ? '#000000' : color;
+    strokeSwatches.querySelectorAll('.swatch').forEach((s) =>
+      s.classList.toggle('active', s === btn),
+    );
+  });
+
+  strokeCustom.addEventListener('input', () => {
+    setActiveStyle({ strokeColor: strokeCustom.value });
+    strokeSwatches.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
+  });
+
+  // ── Style panel — fill color ─────────────────────────────
+  fillSwatches.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-color]');
+    if (!btn) return;
+    const color = btn.dataset.color!;
+    setActiveStyle({ fillColor: color });
+    if (color !== 'transparent') fillCustom.value = color;
+    fillSwatches.querySelectorAll('.swatch').forEach((s) =>
+      s.classList.toggle('active', s === btn),
+    );
+  });
+
+  fillCustom.addEventListener('input', () => {
+    setActiveStyle({ fillColor: fillCustom.value });
+    fillSwatches.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
+  });
+
+  // ── Style panel — stroke width ───────────────────────────
+  strokeWidthBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const width = Number(btn.dataset.width);
+      setActiveStyle({ strokeWidth: width });
+      strokeWidthBtns.forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // ── Text format panel ────────────────────────────────────
+  const updateTextFormatPanel = () => {
+    const { selectedIds } = getAppState();
+    if (selectedIds.size !== 1) {
+      textFormatPanel.classList.remove('visible');
+      return;
+    }
+    const id = Array.from(selectedIds)[0];
+    const el = getAppState().elements.get(id);
+    if (!el || el.type !== 'text') {
+      textFormatPanel.classList.remove('visible');
+      return;
+    }
+    const textEl = el as TextElement;
+
+    // Position panel above selection box (approximate screen position)
+    const { viewport } = getUIState();
+    const screenX = textEl.x * viewport.zoom + viewport.x;
+    const screenY = textEl.y * viewport.zoom + viewport.y;
+    textFormatPanel.style.left = `${Math.max(8, screenX)}px`;
+    textFormatPanel.style.top = `${Math.max(8, screenY - 48)}px`;
+    textFormatPanel.classList.add('visible');
+
+    textFormatPanel.querySelectorAll<HTMLButtonElement>('[data-size]').forEach((btn) =>
+      btn.classList.toggle('active', Number(btn.dataset.size) === textEl.fontSize),
+    );
+    textFormatPanel.querySelectorAll<HTMLButtonElement>('[data-align]').forEach((btn) =>
+      btn.classList.toggle('active', btn.dataset.align === textEl.textAlign),
+    );
+  };
+
+  textFormatPanel.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-size],[data-align]');
+    if (!btn) return;
+    const { selectedIds } = getAppState();
+    if (selectedIds.size !== 1) return;
+    const id = Array.from(selectedIds)[0];
+    const el = getAppState().elements.get(id);
+    if (!el || el.type !== 'text') return;
+
+    const before = snapshotElements();
+    if (btn.dataset.size) {
+      updateElement(id, { fontSize: Number(btn.dataset.size) } as Partial<TextElement>);
+    }
+    if (btn.dataset.align) {
+      updateElement(id, { textAlign: btn.dataset.align as TextAlign } as Partial<TextElement>);
+    }
+    pushHistory({ elements: before }, { elements: snapshotElements() });
+    renderer.requestFullRender();
+  });
+
   // ── Re-render on state changes ────────────────────────────
-  subscribeToAppState(() => renderer.requestFullRender());
+  subscribeToAppState(() => {
+    renderer.requestFullRender();
+    updateTextFormatPanel();
+  });
 
   // ── Test hook (dev / preview only) ───────────────────────
   if (import.meta.env.DEV || import.meta.env.MODE === 'production') {

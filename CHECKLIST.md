@@ -167,3 +167,58 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` complete
   - [x] `tests/e2e/persistence.spec.ts`
   - [x] `tests/e2e/theme.spec.ts`
 - [x] `ARCHITECTURE.md` updated with Section 11 — Test Architecture
+
+---
+
+## Wave 3 — Rotation & Resize, Color Panel, Text Format, Clipboard
+
+### Bug Fixes
+- [x] `SelectTool`: add `getHandleAtPoint()` — route `onPointerDown` to handle vs body hit
+- [x] `src/geometry/handles.ts` — new module: handle positions, hit detection, resize math
+- [x] Resize math: rotation-aware for all 8 handles (corner + edge)
+- [x] Rotation handle drag: `atan2` angle tracking in `SelectTool`
+
+### Style State
+- [x] `UIState.activeStyle: StyleObject` — persists chosen style for new elements
+- [x] `setActiveStyle()` helper in `uiState.ts`
+- [x] All 5 drawing tools (Rectangle, Diamond, Ellipse, Arrow, Line, Text, Pencil) use `activeStyle`
+- [x] `activeStyle.strokeColor` initialised from `getDefaultStrokeColor()` on load
+- [x] `themechange` listener updates `activeStyle.strokeColor` + stroke swatch UI
+
+### Color Panel
+- [x] `<aside id="style-panel">` in `index.html` (bottom-center floating)
+  - [x] Stroke color: 8 swatches + custom `<input type="color">`
+  - [x] Fill color: "none" + 6 swatches + custom `<input type="color">`
+  - [x] Stroke width: 1 / 2 / 3 / 4 px buttons
+- [x] Wired in `main.ts`: click handlers update `activeStyle` via `setActiveStyle()`
+
+### Text Format Panel
+- [x] `<div id="text-format-panel">` in `index.html`
+  - [x] Font size: S (14px) · M (20px) · L (28px)
+  - [x] Text align: Left · Center · Right
+- [x] Wired in `main.ts`: auto-shows/hides when single `TextElement` selected
+- [x] Calls `updateElement()` + `pushHistory()`
+
+### Clipboard
+- [x] `src/state/clipboard.ts` — `copySelected()`, `pasteClipboard()`, `hasClipboard()`
+- [x] `Ctrl+C` / `Ctrl+V` wired in `EventHandler._onKeyDown`
+- [x] Paste adds clone with +20/+20px offset; cascades on repeated paste
+
+### Documentation
+- [x] `TEST_PLAN.md` — Section 7 added (F-20–F-28, E-13–E-14)
+- [x] `ARCHITECTURE.md` — Section 12 added (handles, activeStyle, clipboard)
+
+### Tests (Wave 3) — **all passing**
+- [x] `tests/unit/geometry/handles.test.ts` — 13 tests covering F-20, F-21, E-13 ✅
+- [x] `tests/e2e/resize.spec.ts` — F-20, E-14 ✅
+- [x] `tests/e2e/rotation.spec.ts` — F-22 ✅
+- [x] `tests/e2e/stylePanel.spec.ts` — F-23, F-24 ✅
+- [x] `tests/e2e/textFormat.spec.ts` — F-25, F-26 ✅
+- [x] `tests/e2e/clipboard.spec.ts` — F-27, F-28 ✅
+- [x] Bug fix: `SelectTool` no longer pushes useless history entries for click-to-select
+
+### Final Test Coverage
+| Suite | Files | Tests | Status |
+|-------|-------|-------|--------|
+| Unit | 9 | **106** | ✅ all pass |
+| E2E | 11 | **55** | ✅ all pass |

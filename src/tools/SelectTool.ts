@@ -8,15 +8,42 @@ import { getSortedElements } from '../state/selectors';
 import { hitTestElement } from '../geometry/hitDetection';
 import { elementIntersectsMarquee } from '../geometry/selection';
 import { pushHistory, snapshotElements } from '../state/history';
+import {
+  getHandleAtPoint,
+  applyResize,
+  type HandleHit,
+  type ResizeHandleIndex,
+} from '../geometry/handles';
 
 export class SelectTool implements Tool {
   private renderer: Renderer;
+
+  // Body-drag state
   private _isDragging = false;
-  private _isMarquee = false;
   private _dragStartWorld: Point = { x: 0, y: 0 };
   private _elementStartPositions = new Map<string, { x: number; y: number }>();
+
+  // Marquee state
+  private _isMarquee = false;
   private _marqueeStart: Point = { x: 0, y: 0 };
+
+  // Resize state
+  private _activeHandle: HandleHit | null = null;
+  private _resizeStartEl: DrawableElement | null = null;
+  private _resizingId: string | null = null;
+
+  // Rotation state
+  private _isRotating = false;
+  private _rotatingId: string | null = null;
+  private _rotateCx = 0;
+  private _rotateCy = 0;
+  private _rotateStartPointerAngle = 0;
+  private _rotateStartElAngle = 0;
+
+  // Snapshot before any operation (for history)
   private _beforeSnapshot: Map<string, DrawableElement> | null = null;
+  // Tracks whether any element was actually mutated in this gesture
+  private _elementsMutated = false;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -24,24 +51,42 @@ export class SelectTool implements Tool {
 
   onPointerDown(point: Point, e: PointerEvent): void {
     const { zoom } = getUIState().viewport;
+
+    // ── Phase 1: check handles on currently selected elements ──
+    const selectedEls = getSortedElements()
+      .reverse()
+      .filter((el) => getAppState().selectedIds.has(el.id));
+
+    for (const el of selectedEls) {
+      const handle = getHandleAtPoint(el, point, zoom);
+      if (handle) {
+        this._beforeSnapshot = snapshotElements();
+        if (handle.type === 'rotate') {
+          this._startRotate(el, point);
+        } else {
+          this._startResize(el, handle);
+        }
+        this.renderer.renderInteraction(null);
+        return;
+      }
+    }
+
+    // ── Phase 2: body hit test ──
     const elements = getSortedElements().reverse();
     const hit = elements.find((el) => hitTestElement(el, point, zoom));
 
     if (hit) {
       if (e.shiftKey) {
-
         const ids = new Set(getAppState().selectedIds);
         ids.has(hit.id) ? ids.delete(hit.id) : ids.add(hit.id);
         setAppState({ selectedIds: ids });
       } else {
-        const ids = getAppState().selectedIds;
-        if (!ids.has(hit.id)) {
+        if (!getAppState().selectedIds.has(hit.id)) {
           setAppState({ selectedIds: new Set([hit.id]) });
         }
       }
 
       this._isDragging = true;
-      this._isMarquee = false;
       this._dragStartWorld = { ...point };
       this._beforeSnapshot = snapshotElements();
 
@@ -50,21 +95,86 @@ export class SelectTool implements Tool {
         if (el) this._elementStartPositions.set(id, { x: el.x, y: el.y });
       });
     } else {
-      if (!e.shiftKey) {
-        setAppState({ selectedIds: new Set() });
-      }
+      if (!e.shiftKey) setAppState({ selectedIds: new Set() });
       this._isMarquee = true;
-      this._isDragging = false;
       this._marqueeStart = { ...point };
     }
 
     this.renderer.renderInteraction(null);
   }
 
+  private _startResize(
+    el: DrawableElement,
+    handle: { type: 'resize'; index: ResizeHandleIndex },
+  ): void {
+    this._activeHandle = handle;
+    this._resizeStartEl = { ...el } as DrawableElement;
+    this._resizingId = el.id;
+    setAppState({ selectedIds: new Set([el.id]) });
+  }
+
+  private _startRotate(el: DrawableElement, point: Point): void {
+    this._isRotating = true;
+    this._rotatingId = el.id;
+    this._rotateCx = el.x + el.width / 2;
+    this._rotateCy = el.y + el.height / 2;
+    this._rotateStartPointerAngle = Math.atan2(
+      point.y - this._rotateCy,
+      point.x - this._rotateCx,
+    );
+    this._rotateStartElAngle = el.angle;
+    setAppState({ selectedIds: new Set([el.id]) });
+  }
+
   onPointerMove(point: Point, _e: PointerEvent): void {
+    // ── Resize ──
+    if (
+      this._activeHandle?.type === 'resize' &&
+      this._resizeStartEl !== null &&
+      this._resizingId !== null
+    ) {
+      this._elementsMutated = true;
+      const newGeom = applyResize(
+        this._resizeStartEl,
+        this._activeHandle.index,
+        point,
+      );
+      const el = getAppState().elements.get(this._resizingId);
+      if (el) {
+        const elements = new Map(getAppState().elements);
+        elements.set(this._resizingId, { ...el, ...newGeom });
+        setAppState({ elements });
+      }
+      this.renderer.renderInteraction(null);
+      return;
+    }
+
+    // ── Rotation ──
+    if (this._isRotating && this._rotatingId) {
+      this._elementsMutated = true;
+      const el = getAppState().elements.get(this._rotatingId);
+      if (el) {
+        const currentAngle = Math.atan2(
+          point.y - this._rotateCy,
+          point.x - this._rotateCx,
+        );
+        const delta = currentAngle - this._rotateStartPointerAngle;
+        const elements = new Map(getAppState().elements);
+        elements.set(this._rotatingId, {
+          ...el,
+          angle: this._rotateStartElAngle + delta,
+        });
+        setAppState({ elements });
+      }
+      this.renderer.renderInteraction(null);
+      return;
+    }
+
+    // ── Body drag ──
     if (this._isDragging) {
       const dx = point.x - this._dragStartWorld.x;
       const dy = point.y - this._dragStartWorld.y;
+      if (dx !== 0 || dy !== 0) this._elementsMutated = true;
 
       getAppState().selectedIds.forEach((id) => {
         const start = this._elementStartPositions.get(id);
@@ -77,31 +187,35 @@ export class SelectTool implements Tool {
       });
 
       this.renderer.renderInteraction(null);
-    } else if (this._isMarquee) {
+      return;
+    }
+
+    // ── Marquee ──
+    if (this._isMarquee) {
       const marquee: BoundingBox = {
         minX: Math.min(this._marqueeStart.x, point.x),
         minY: Math.min(this._marqueeStart.y, point.y),
         maxX: Math.max(this._marqueeStart.x, point.x),
         maxY: Math.max(this._marqueeStart.y, point.y),
       };
-
-      const hits = getSortedElements().filter((el) => elementIntersectsMarquee(el, marquee));
+      const hits = getSortedElements().filter((el) =>
+        elementIntersectsMarquee(el, marquee),
+      );
       setAppState({ selectedIds: new Set(hits.map((el) => el.id)) });
       this.renderer.renderInteraction(marquee);
     }
   }
 
   onPointerUp(_point: Point, _e: PointerEvent): void {
-    if (this._isDragging && this._beforeSnapshot) {
+    if (this._elementsMutated && this._beforeSnapshot) {
       const afterSnapshot = snapshotElements();
-      pushHistory({ elements: this._beforeSnapshot }, { elements: afterSnapshot });
+      pushHistory(
+        { elements: this._beforeSnapshot },
+        { elements: afterSnapshot },
+      );
     }
 
-    this._isDragging = false;
-    this._isMarquee = false;
-    this._elementStartPositions.clear();
-    this._beforeSnapshot = null;
-
+    this._reset();
     this.renderer.renderScene();
     this.renderer.renderInteraction(null);
   }
@@ -124,8 +238,19 @@ export class SelectTool implements Tool {
   }
 
   cancel(): void {
+    this._reset();
+  }
+
+  private _reset(): void {
     this._isDragging = false;
     this._isMarquee = false;
     this._elementStartPositions.clear();
+    this._beforeSnapshot = null;
+    this._elementsMutated = false;
+    this._activeHandle = null;
+    this._resizeStartEl = null;
+    this._resizingId = null;
+    this._isRotating = false;
+    this._rotatingId = null;
   }
 }

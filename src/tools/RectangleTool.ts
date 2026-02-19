@@ -6,7 +6,6 @@ import { getUIState, setProvisionalElement, setActiveTool } from '../state/uiSta
 import { addElement } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import { generateId, generateSeed } from '../utils/id';
-import { DEFAULT_STYLE } from '../types/elements';
 import { getMaxZIndex } from '../state/selectors';
 
 export class RectangleTool implements Tool {
@@ -79,7 +78,7 @@ export class RectangleTool implements Tool {
       angle: 0,
       zIndex: getMaxZIndex() + 1,
       groupId: null,
-      style: { ...DEFAULT_STYLE },
+      style: { ...getUIState().activeStyle },
       version: 0,
       seed: provisionalElement?.seed ?? generateSeed(),
     };

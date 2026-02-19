@@ -6,7 +6,6 @@ import { setActiveTool, getUIState } from '../state/uiState';
 import { addElement } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import { generateId, generateSeed } from '../utils/id';
-import { DEFAULT_STYLE } from '../types/elements';
 import { getMaxZIndex } from '../state/selectors';
 
 const FONT_SIZE = 20;
@@ -53,7 +52,7 @@ export class TextTool implements Tool {
       angle: 0,
       zIndex: getMaxZIndex() + 1,
       groupId: null,
-      style: { ...DEFAULT_STYLE },
+      style: { ...getUIState().activeStyle },
       version: 0,
       seed: generateSeed(),
       text: '',

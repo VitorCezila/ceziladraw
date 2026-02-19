@@ -488,6 +488,8 @@ npm run test
 |-------|-------|-------|--------|
 | Unit | 8 | 93 | ✅ all pass |
 | E2E | 6 | 40 | ✅ all pass |
+| Unit Wave 3 | +2 | TBD | 🔄 added in Wave 3 |
+| E2E Wave 3 | +5 | TBD | 🔄 added in Wave 3 |
 
 Canvas state integrity is guaranteed because:
 
@@ -495,3 +497,104 @@ Canvas state integrity is guaranteed because:
 2. Every user-facing flow has an E2E test that inspects `AppState` directly — not pixels.
 3. The history module is tested with >100 entries to verify the 100-entry cap.
 4. `deserializeState` is tested with corrupted inputs to ensure the app never crashes on load.
+
+---
+
+## 12. Wave 3 — Handle System, Style State & Clipboard
+
+_Last updated: Wave 3 (Rotation & Resize, Color Panel, Text Format, Clipboard)_
+
+### 12.1 Handle Detection Algorithm (`src/geometry/handles.ts`)
+
+Eight resize handles + one rotation handle are computed in the element's **local space** (the same frame `InteractionRenderer` draws them in):
+
+```
+Handle index layout:
+  0(TL)  1(TC)  2(TR)
+  7(ML)          3(MR)
+  6(BL)  5(BC)  4(BR)
+  ●  ← rotation handle (20 / zoom px above TC)
+```
+
+Detection in `getHandleAtPoint(el, worldPoint, zoom)`:
+1. Convert `worldPoint` to element local space: `local = toElementLocalSpace(world, cx, cy, el.angle)`
+2. Compute all 9 handle positions in local space with `pad = 4/zoom`, `HANDLE_SIZE = 8/zoom`
+3. Check `distance(local, handlePos) ≤ HANDLE_SIZE * 1.5` — generous area for usability
+4. Rotation handle takes priority (checked first)
+5. Returns `{ type: 'resize', index: 0–7 }`, `{ type: 'rotate' }`, or `null`
+
+Polyline elements (arrow, line, pencil) return `null` — handles don't apply.
+
+### 12.2 Rotation-Aware Resize Math
+
+**Corner handles** (indices 0, 2, 4, 6) — fixed corner stays at same world position:
+
+```
+fixedWorld  = rotatePoint(oppositeCorner, startCenter, angle)
+newCenter   = midpoint(fixedWorld, dragPoint)
+lFixed      = toElementLocalSpace(fixedWorld, newCenter, angle)
+lDrag       = toElementLocalSpace(dragPoint,  newCenter, angle)
+newX = min(lFixed.x, lDrag.x)
+newY = min(lFixed.y, lDrag.y)
+newW = |lDrag.x - lFixed.x|  (clamped to ≥ 2)
+newH = |lDrag.y - lFixed.y|  (clamped to ≥ 2)
+```
+
+**Edge handles** (indices 1, 3, 5, 7) — one axis fixed; work in original-center local space:
+
+```
+dragLocal = toElementLocalSpace(dragPoint, startCenter, angle)
+TC(1): newH = max(2, (sy+sh) - dragLocal.y); newY = (sy+sh) - newH
+MR(3): newW = max(2, dragLocal.x - sx)
+BC(5): newH = max(2, dragLocal.y - sy)
+ML(7): newW = max(2, (sx+sw) - dragLocal.x); newX = (sx+sw) - newW
+```
+
+### 12.3 Rotation Handle Drag
+
+```
+onPointerDown  → _rotateStartPointerAngle = atan2(point.y - cy, point.x - cx)
+               → _rotateStartElAngle = el.angle
+onPointerMove  → currentAngle = atan2(point.y - cy, point.x - cx)
+               → el.angle = _rotateStartElAngle + (currentAngle - _rotateStartPointerAngle)
+```
+
+Center `(cx, cy) = (el.x + el.width/2, el.y + el.height/2)` stays fixed throughout rotation.
+
+### 12.4 Style State (`activeStyle` in UIState)
+
+`UIState.activeStyle: StyleObject` holds the style applied to all **newly created** elements. Tools no longer use `DEFAULT_STYLE` directly:
+
+```ts
+// Before: style: { ...DEFAULT_STYLE }
+// After:  style: { ...getUIState().activeStyle }
+```
+
+`activeStyle` is initialised from `getDefaultStrokeColor()` so the stroke is always readable on the current theme. On `themechange`, `main.ts` updates `activeStyle.strokeColor` to match.
+
+The style panel UI (bottom-center floating bar) exposes:
+- **Stroke swatches**: 8 presets + custom `<input type="color">`
+- **Fill swatches**: "none" + 6 presets + custom `<input type="color">`
+- **Stroke width**: 1 / 2 / 3 / 4 px
+
+### 12.5 Text Format Panel
+
+When exactly one `TextElement` is selected, a floating panel appears above the selection:
+- Font size buttons: S (14px) · M (20px) · L (28px)
+- Alignment buttons: Left / Center / Right
+
+Clicking calls `updateElement(id, { fontSize })` or `updateElement(id, { textAlign })` and pushes a history entry.
+
+### 12.6 Clipboard (`src/state/clipboard.ts`)
+
+```ts
+copySelected()    // deep-clones selected elements into in-memory clipboard
+pasteClipboard()  // adds clones with +20/+20 px offset; pushes history
+hasClipboard()    // guard for empty clipboard
+```
+
+Wired in `EventHandler._onKeyDown`:
+- `Ctrl+C` → `copySelected()`
+- `Ctrl+V` → `pasteClipboard()` + full render
+
+Pasting repeatedly cascades the offset so each paste is visually distinct.

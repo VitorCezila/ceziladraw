@@ -1,4 +1,4 @@
-import type { DrawableElement } from './elements';
+import type { DrawableElement, StyleObject } from './elements';
 import type { Viewport } from './geometry';
 
 export type ToolType =
@@ -27,6 +27,7 @@ export interface UIState {
   editingElementId: string | null;
   provisionalElement: DrawableElement | null;
   viewport: Viewport;
+  activeStyle: StyleObject;
 }
 
 export interface HistoryEntry {

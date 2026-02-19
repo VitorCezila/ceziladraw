@@ -7,7 +7,6 @@ import { addElement } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import { generateId, generateSeed } from '../utils/id';
 import { getMaxZIndex } from '../state/selectors';
-import { getDefaultStrokeColor } from '../utils/theme';
 
 export class PencilTool implements Tool {
   private renderer: Renderer;
@@ -95,12 +94,10 @@ export class PencilTool implements Tool {
       zIndex: getMaxZIndex() + 1,
       groupId: null,
       style: {
-        strokeColor: getDefaultStrokeColor(),
-        strokeWidth: 2,
+        ...getUIState().activeStyle,
         fillColor: 'transparent',
         fillStyle: 'none',
         roughness: 0,
-        opacity: 1,
       },
       version: 0,
       seed: provisionalElement?.seed ?? generateSeed(),

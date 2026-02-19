@@ -5,6 +5,7 @@ import { getUIState, setUIState, setViewport } from '../state/uiState';
 import { getAppState, setAppState } from '../state/appState';
 import { screenToWorld, zoomOnPoint } from '../geometry/transform';
 import { undo, redo } from '../state/history';
+import { copySelected, pasteClipboard } from '../state/clipboard';
 
 export class EventHandler {
   private canvas: HTMLCanvasElement;
@@ -108,6 +109,8 @@ export class EventHandler {
     if (ctrl && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); this.renderer.requestFullRender(); return; }
     if (ctrl && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); this.renderer.requestFullRender(); return; }
     if (ctrl && e.key === 'a') { e.preventDefault(); setAppState({ selectedIds: new Set(getAppState().elements.keys()) }); this.renderer.renderInteraction(null); return; }
+    if (ctrl && e.key === 'c') { e.preventDefault(); copySelected(); return; }
+    if (ctrl && e.key === 'v') { e.preventDefault(); pasteClipboard(); this.renderer.requestFullRender(); return; }
 
     if (e.code === 'Space' && !e.repeat && this._toolBeforeSpace === null) {
       e.preventDefault();

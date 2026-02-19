@@ -1,6 +1,18 @@
 import type { UIState, ToolType } from '../types/state';
-import type { DrawableElement } from '../types/elements';
+import type { DrawableElement, StyleObject } from '../types/elements';
 import type { Viewport } from '../types/geometry';
+import { DEFAULT_STYLE } from '../types/elements';
+
+function _makeDefaultActiveStyle(): StyleObject {
+  // Avoid circular import at module-load time: read from DOM directly
+  const isDark =
+    typeof document !== 'undefined' &&
+    document.documentElement.dataset.theme === 'dark';
+  return {
+    ...DEFAULT_STYLE,
+    strokeColor: isDark ? '#cdd6f4' : '#1e1e2e',
+  };
+}
 
 let _state: UIState = {
   activeTool: 'select',
@@ -12,6 +24,7 @@ let _state: UIState = {
   editingElementId: null,
   provisionalElement: null,
   viewport: { x: 0, y: 0, zoom: 1 },
+  activeStyle: _makeDefaultActiveStyle(),
 };
 
 const _listeners = new Set<() => void>();
@@ -35,6 +48,10 @@ export function setProvisionalElement(element: DrawableElement | null): void {
 
 export function setViewport(viewport: Partial<Viewport>): void {
   setUIState({ viewport: { ..._state.viewport, ...viewport } });
+}
+
+export function setActiveStyle(patch: Partial<StyleObject>): void {
+  setUIState({ activeStyle: { ..._state.activeStyle, ...patch } });
 }
 
 export function subscribeToUIState(listener: () => void): () => void {

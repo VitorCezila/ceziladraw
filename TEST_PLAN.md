@@ -523,6 +523,43 @@ npm run test
 ## Section 6 — Known Limitations
 
 - Canvas pixel content is **not** pixel-compared. Tests assert on `AppState` via `window.__ceziladraw`.
-- Resize handles (8-point) are not yet implemented — resize interaction tests are deferred.
-- Rotation handle not yet implemented — E-12 is tested at the unit level only.
+- Resize handles are now implemented; resize interaction tests are in Section 7.
+- Rotation handle is now implemented; rotation tests are in Section 7.
 - Touch/mobile events are not yet covered.
+
+---
+
+## Section 7 — Wave 3 Test Scenarios
+
+### New Critical Flows
+
+| ID | Feature | Scenario | Assertion | Type |
+|----|---------|----------|-----------|------|
+| F-20 | Resize | Drag BR handle of axis-aligned rect | `width/height` increase; opposite corner fixed | [U][E] |
+| F-21 | Resize | Drag BR handle of 45° rotated rect | opposite corner stays fixed in world space | [U] |
+| F-22 | Rotation | Drag rotation handle ~90° | `element.angle ≈ π/2 ± 0.2` | [U][E] |
+| F-23 | Color | Click stroke swatch → draw rect | new element `style.strokeColor` matches swatch value | [E] |
+| F-24 | Dark stroke | Toggle dark mode → draw rect | `style.strokeColor === '#cdd6f4'` (light) | [E] |
+| F-25 | Text | Select text, click L size button | `element.fontSize === 28` | [E] |
+| F-26 | Text | Select text, click Center align | `element.textAlign === 'center'` | [E] |
+| F-27 | Clipboard | Ctrl+C selected rect, Ctrl+V | two elements, clone offset by 20px | [E] |
+| F-28 | Clipboard | Ctrl+V with empty clipboard | no crash, `elementCount` unchanged | [E] |
+
+### New Edge Cases
+
+| ID | Feature | Scenario | Assertion | Type |
+|----|---------|----------|-----------|------|
+| E-13 | Resize | Drag handle to negative / zero size | `width/height` clamped to min 2px | [U] |
+| E-14 | Resize | Resize → undo → redo resize | state consistent; no ghost elements | [E] |
+
+### Test file mapping (Wave 3)
+
+| File | Scenarios |
+|------|-----------|
+| `tests/unit/handles.test.ts` | F-20, F-21, E-13 |
+| `tests/unit/resizeMath.test.ts` | F-21, E-13 |
+| `tests/e2e/resize.spec.ts` | F-20, E-14 |
+| `tests/e2e/rotation.spec.ts` | F-22 |
+| `tests/e2e/stylePanel.spec.ts` | F-23, F-24 |
+| `tests/e2e/textFormat.spec.ts` | F-25, F-26 |
+| `tests/e2e/clipboard.spec.ts` | F-27, F-28 |
