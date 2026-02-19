@@ -393,3 +393,105 @@ onPointerMove(point, e):
 ```
 
 **Space key** in `EventHandler` provides a *temporary* hand mode: on `keydown Space` the previous tool is saved and `hand` is activated; on `keyup Space` the previous tool is restored.
+
+---
+
+## 11. Test Architecture
+
+> Last updated: QA Wave (Vitest + Playwright)
+
+### Strategy
+
+Two complementary layers ensure correctness at different granularities:
+
+| Layer | Tool | Scope | What it tests |
+|-------|------|-------|---------------|
+| Unit | **Vitest + jsdom** | Pure TypeScript functions | Math invariants, hit detection, bounding boxes, state mutations, serialization round-trips |
+| E2E | **Playwright (Chromium)** | Full browser against `vite preview` build | Real user flows, canvas interaction, localStorage, keyboard shortcuts |
+
+### Why Vitest
+
+- Zero config: shares the same `vite.config.ts` plugin chain.
+- TypeScript native — no transpile overhead.
+- `vi.resetModules()` + dynamic imports isolate singleton state modules (`appState`, `uiState`, `history`) between test cases without modifying production code.
+
+### Why Playwright
+
+- Runs against the production-built bundle (`npm run build && npm run preview`) — deterministic, no hot-module surprises.
+- `page.evaluate()` lets tests read internal state via the `window.__ceziladraw` hook.
+- Pointer events on the canvas (`mouse.down / move / up`) closely mirror real user gestures.
+- Ctrl+scroll zoom and Shift+click tested with explicit `keyboard.down / up` calls.
+
+### The `window.__ceziladraw` Hook
+
+Added to `src/main.ts` in both `DEV` and `production` modes so that the built preview also exposes it:
+
+```ts
+(window as any).__ceziladraw = { getAppState, getUIState };
+```
+
+Playwright tests use it to assert on internal state without pixel-diffing the canvas:
+
+```ts
+const count = await page.evaluate(
+  () => (window as any).__ceziladraw.getAppState().elements.size
+);
+```
+
+### Singleton Isolation Pattern
+
+`appState.ts`, `uiState.ts`, and `history.ts` use module-level mutable variables (singleton pattern). Vitest tests reset them before each test case via:
+
+```ts
+beforeEach(async () => {
+  vi.resetModules();
+  const mod = await import('../../../src/state/history');
+  // re-bind exports to fresh module instance
+});
+```
+
+### File Layout
+
+```
+tests/
+├── unit/
+│   ├── geometry/         transform, hitDetection, selection, boundingBox
+│   ├── state/            history, appState
+│   ├── storage/          serializer
+│   └── utils/            math
+└── e2e/
+    ├── drawing.spec.ts
+    ├── selection.spec.ts
+    ├── undoRedo.spec.ts
+    ├── panZoom.spec.ts
+    ├── persistence.spec.ts
+    ├── theme.spec.ts
+    └── helpers.ts
+```
+
+### Running Tests
+
+```bash
+# Unit tests (93 tests, ~3 s)
+npm run test:unit
+
+# E2E tests — builds first then runs Playwright (40 tests, ~30 s)
+npm run test:e2e
+
+# Both in sequence
+npm run test
+```
+
+### Current Coverage
+
+| Suite | Files | Tests | Status |
+|-------|-------|-------|--------|
+| Unit | 8 | 93 | ✅ all pass |
+| E2E | 6 | 40 | ✅ all pass |
+
+Canvas state integrity is guaranteed because:
+
+1. Every geometry function has unit tests covering edge cases (negative dimensions, rotation, zoom clamping).
+2. Every user-facing flow has an E2E test that inspects `AppState` directly — not pixels.
+3. The history module is tested with >100 entries to verify the 100-entry cap.
+4. `deserializeState` is tested with corrupted inputs to ensure the app never crashes on load.

@@ -141,3 +141,29 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` complete
 - [ ] Off-screen canvas for complex elements
 - [ ] Smooth zoom animation
   - [x] Dark mode support (Wave 2)
+
+---
+
+## QA Wave — Test Infrastructure
+
+- [x] `TEST_PLAN.md` — 19 critical flows + 13 edge cases documented
+- [x] `vitest.config.ts` — unit test config (jsdom env)
+- [x] `playwright.config.ts` — E2E config (chromium, vite preview)
+- [x] `window.__ceziladraw` hook in `main.ts` (dev + production builds)
+- [x] Unit tests — 8 files, **93 tests**, all passing
+  - [x] `tests/unit/utils/math.test.ts`
+  - [x] `tests/unit/geometry/transform.test.ts`
+  - [x] `tests/unit/geometry/hitDetection.test.ts`
+  - [x] `tests/unit/geometry/selection.test.ts`
+  - [x] `tests/unit/geometry/boundingBox.test.ts`
+  - [x] `tests/unit/state/history.test.ts`
+  - [x] `tests/unit/state/appState.test.ts`
+  - [x] `tests/unit/storage/serializer.test.ts`
+- [x] E2E tests — 6 spec files, **40 tests**, all passing
+  - [x] `tests/e2e/drawing.spec.ts`
+  - [x] `tests/e2e/selection.spec.ts`
+  - [x] `tests/e2e/undoRedo.spec.ts`
+  - [x] `tests/e2e/panZoom.spec.ts`
+  - [x] `tests/e2e/persistence.spec.ts`
+  - [x] `tests/e2e/theme.spec.ts`
+- [x] `ARCHITECTURE.md` updated with Section 11 — Test Architecture

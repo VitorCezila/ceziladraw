@@ -4,7 +4,7 @@ import { Renderer } from './renderer/Renderer';
 import { ToolManager } from './tools/ToolManager';
 import { EventHandler } from './canvas/EventHandler';
 import { initStorage, exportToJson, importFromJson } from './storage/localStorage';
-import { subscribeToAppState } from './state/appState';
+import { getAppState, subscribeToAppState } from './state/appState';
 import { subscribeToUIState, setViewport, getUIState } from './state/uiState';
 import { undo, redo, canUndo, canRedo, subscribeToHistory } from './state/history';
 import { zoomOnPoint } from './geometry/transform';
@@ -131,6 +131,14 @@ function main() {
 
   // ── Re-render on state changes ────────────────────────────
   subscribeToAppState(() => renderer.requestFullRender());
+
+  // ── Test hook (dev / preview only) ───────────────────────
+  if (import.meta.env.DEV || import.meta.env.MODE === 'production') {
+    (window as unknown as Record<string, unknown>)['__ceziladraw'] = {
+      getAppState,
+      getUIState,
+    };
+  }
 }
 
 main();
