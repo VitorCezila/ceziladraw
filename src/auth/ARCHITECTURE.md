@@ -8,7 +8,7 @@ Handles session check and Google OAuth sign-in. When Supabase is not configured,
 
 | File | Purpose |
 |------|---------|
-| `authGate.ts` | `initAuth`, `signOut`, `getCurrentUser`; renders sign-in overlay |
+| `authGate.ts` | `initAuth`, `showSignIn`, `signOut`, `getCurrentUser`; renders sign-in overlay on demand |
 
 ---
 
@@ -21,12 +21,14 @@ initAuth(onAuth)
     │
     ├── getSession()
     │   ├── session exists → _currentUser = user, onAuth(user)
-    │   └── no session → _renderSignIn()
+    │   └── no session → onAuth(null) (guest mode; no overlay)
     │
     └── onAuthStateChange listener
-        ├── session → _removeSignIn(), onAuth(user)
-        └── signOut → _renderSignIn()
+        ├── session → _removeSignIn(), window.location.reload()
+        └── no session → window.location.reload()
 ```
+
+When the user clicks "Sign in" in the UI, the app calls `showSignIn()`, which renders the overlay. After OAuth redirect (or sign-out), the page reloads so bootstrap runs again with the new session state.
 
 ---
 
@@ -34,22 +36,23 @@ initAuth(onAuth)
 
 | Function | Description |
 |----------|-------------|
-| `initAuth(onAuth)` | Checks session; if none, shows overlay. Calls `onAuth(user)` when authenticated (or `onAuth(null)` in local mode). |
-| `signOut()` | Signs out via Supabase; triggers `onAuthStateChange` which re-renders the overlay. |
+| `initAuth(onAuth)` | Checks session. Calls `onAuth(user)` when authenticated, or `onAuth(null)` when not (guest mode; overlay is not shown). |
+| `showSignIn()` | Shows the sign-in overlay. Call this when the user explicitly chooses to sign in (e.g. "Sign in" button). Idempotent. |
+| `signOut()` | Signs out via Supabase; `onAuthStateChange` fires and the page reloads. |
 | `getCurrentUser()` | Returns the current `User` or `null`. |
 
 ---
 
 ## Sign-In Overlay
 
-`_renderSignIn()` creates a full-screen `#auth-overlay` with:
+`_renderSignIn()` (used by `showSignIn()`) creates a full-screen `#auth-overlay` with:
 
 - Title: "Ceziladraw"
 - Subtitle: "A hand-drawn style canvas"
 - Button: "Continue with Google" (Google logo SVG)
 - Note: "Your boards are private and synced to your account."
 
-Clicking the button calls `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })`. After the OAuth redirect, Supabase restores the session from the URL hash; `onAuthStateChange` fires and `onAuth(user)` is called.
+Clicking the button calls `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })`. After the OAuth redirect, Supabase restores the session from the URL hash; `onAuthStateChange` fires and the page reloads so the next bootstrap loads cloud boards.
 
 ---
 

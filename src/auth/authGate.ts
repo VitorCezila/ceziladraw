@@ -21,8 +21,9 @@ export function getCurrentUser(): User | null {
  * - If Supabase is not configured: resolves immediately and calls onAuth(null)
  *   so the app runs in local-only mode.
  * - If Supabase is configured: checks for an existing session (handles the
- *   OAuth redirect callback too). Calls onAuth(user) when authenticated, or
- *   renders the sign-in screen when not.
+ *   OAuth redirect callback too). When authenticated, calls onAuth(user).
+ *   When not authenticated, calls onAuth(null) so the app loads the board in
+ *   guest mode; the sign-in overlay is only shown when the user calls showSignIn().
  */
 export async function initAuth(
   onAuth: (user: User | null) => void,
@@ -41,20 +42,31 @@ export async function initAuth(
     return;
   }
 
-  // No session — show the sign-in overlay
-  _renderSignIn();
+  // No session — run in guest mode (board loads); do not block with overlay
+  _currentUser = null;
+  onAuth(null);
 
-  // Listen for future auth state changes (after redirect)
+  // Reload only when user signs in (OAuth redirect). Do NOT reload when session is null:
+  // that fires on initial load and would cause an infinite reload loop. Sign-out already
+  // triggers reload from the Sign out button handler.
   supabase.auth.onAuthStateChange((_event, session) => {
     if (session) {
       _currentUser = session.user;
       _removeSignIn();
-      onAuth(_currentUser);
+      window.location.reload();
     } else {
       _currentUser = null;
-      _renderSignIn();
     }
   });
+}
+
+/**
+ * Shows the sign-in overlay (e.g. when the user clicks "Sign in" in the UI).
+ * Idempotent; safe to call when overlay is already visible.
+ */
+export function showSignIn(): void {
+  if (!SUPABASE_ENABLED || !supabase) return;
+  _renderSignIn();
 }
 
 export async function signOut(): Promise<void> {
