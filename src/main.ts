@@ -50,8 +50,10 @@ function main() {
   const opacityValue = document.getElementById('opacity-value')!;
   const strokeHexInput = document.getElementById('stroke-hex-input') as HTMLInputElement;
   const strokeHexPreview = document.getElementById('stroke-hex-preview') as HTMLElement;
+  const strokeColorPicker = document.getElementById('stroke-color-picker') as HTMLInputElement;
   const fillHexInput = document.getElementById('fill-hex-input') as HTMLInputElement;
   const fillHexPreview = document.getElementById('fill-hex-preview') as HTMLElement;
+  const fillColorPicker = document.getElementById('fill-color-picker') as HTMLInputElement;
 
   // ── Core setup ──────────────────────────────────────────
   initTheme();
@@ -235,6 +237,28 @@ function main() {
       fillHexInput.classList.add('invalid');
     }
   });
+
+  // ── Color picker (native) ────────────────────────────────
+  strokeHexPreview.addEventListener('click', () => strokeColorPicker.click());
+  fillHexPreview.addEventListener('click', () => fillColorPicker.click());
+
+  function applyStrokePickerColor(): void {
+    const val = strokeColorPicker.value;
+    applyStyleToSelected({ strokeColor: val });
+    syncHexPreview(strokeHexPreview, strokeHexInput, val);
+    strokeHexInput.classList.remove('invalid');
+  }
+  strokeColorPicker.addEventListener('input', applyStrokePickerColor);
+  strokeColorPicker.addEventListener('change', applyStrokePickerColor);
+
+  function applyFillPickerColor(): void {
+    const val = fillColorPicker.value;
+    applyStyleToSelected({ fillColor: val });
+    syncHexPreview(fillHexPreview, fillHexInput, val);
+    fillHexInput.classList.remove('invalid');
+  }
+  fillColorPicker.addEventListener('input', applyFillPickerColor);
+  fillColorPicker.addEventListener('change', applyFillPickerColor);
 
   // ── Properties panel: stroke width ───────────────────────
   propPanel.addEventListener('click', (e) => {
@@ -461,6 +485,7 @@ function main() {
     });
     syncHexPreview(strokeHexPreview, strokeHexInput, style.strokeColor);
     strokeHexInput.classList.remove('invalid');
+    strokeColorPicker.value = HEX_RE.test(style.strokeColor) ? style.strokeColor : '#000000';
 
     // Fill swatches
     fillSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
@@ -469,6 +494,7 @@ function main() {
     });
     syncHexPreview(fillHexPreview, fillHexInput, style.fillColor);
     fillHexInput.classList.remove('invalid');
+    fillColorPicker.value = HEX_RE.test(style.fillColor) ? style.fillColor : '#ffffff';
 
     // Stroke width
     propPanel.querySelectorAll<HTMLButtonElement>('.sw-btn').forEach((b) => {

@@ -164,8 +164,15 @@ export class SelectTool implements Tool {
       if (el) {
         if (el.type === 'text') {
           const startTextEl = this._resizeStartEl as TextElement;
-          const widthRatio = newGeom.width / startTextEl.width;
-          const newFontSize = Math.max(8, Math.round(startTextEl.fontSize * widthRatio));
+          const handleIdx = this._activeHandle!.index;
+          const isCorner = handleIdx === 0 || handleIdx === 2 || handleIdx === 4 || handleIdx === 6;
+
+          // Corners: scale font proportionally with width so the text grows/shrinks.
+          // Horizontal-only handles (MR=3, ML=7): just change wrap width, keep font.
+          const newFontSize = isCorner
+            ? Math.max(8, Math.round(startTextEl.fontSize * (newGeom.width / startTextEl.width)))
+            : startTextEl.fontSize;
+
           const newHeight = computeTextHeight(
             startTextEl.text, newGeom.width, newFontSize, startTextEl.fontFamily,
           );
