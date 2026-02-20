@@ -49,7 +49,7 @@ export class TextTool implements Tool {
   }
 
   private _spawnTextarea(worldPoint: Point): void {
-    const { viewport } = getUIState();
+    const { viewport, activeStyle } = getUIState();
     const screenX = worldPoint.x * viewport.zoom + viewport.x;
     const screenY = worldPoint.y * viewport.zoom + viewport.y;
 
@@ -63,7 +63,7 @@ export class TextTool implements Tool {
       angle: 0,
       zIndex: getMaxZIndex() + 1,
       groupId: null,
-      style: { ...getUIState().activeStyle },
+      style: { ...activeStyle },
       version: 0,
       seed: generateSeed(),
       text: '',
@@ -73,14 +73,14 @@ export class TextTool implements Tool {
     };
     this._currentElement = el;
     this._editingExisting = false;
-    this._mountTextarea(screenX, screenY, FONT_SIZE, FONT_FAMILY, '');
+    this._mountTextarea(screenX, screenY, FONT_SIZE, FONT_FAMILY, activeStyle.strokeColor, '');
   }
 
   private _spawnTextareaForElement(el: TextElement): void {
     const { viewport } = getUIState();
     const screenX = el.x * viewport.zoom + viewport.x;
     const screenY = el.y * viewport.zoom + viewport.y;
-    this._mountTextarea(screenX, screenY, el.fontSize, el.fontFamily, el.text);
+    this._mountTextarea(screenX, screenY, el.fontSize, el.fontFamily, el.style.strokeColor, el.text);
   }
 
   private _mountTextarea(
@@ -88,6 +88,7 @@ export class TextTool implements Tool {
     screenY: number,
     fontSize: number,
     fontFamily: string,
+    strokeColor: string,
     initialText: string,
   ): void {
     const { viewport } = getUIState();
@@ -97,6 +98,9 @@ export class TextTool implements Tool {
     ta.style.top = `${screenY}px`;
     ta.style.fontSize = `${fontSize * viewport.zoom}px`;
     ta.style.fontFamily = fontFamily;
+    ta.style.color = strokeColor;
+    ta.style.padding = '0';
+    ta.style.lineHeight = '1.4';
     ta.value = initialText;
 
     ta.addEventListener('input', () => this._onInput(ta));
