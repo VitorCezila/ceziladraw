@@ -66,6 +66,11 @@
             <button class="swatch" data-color="#f97316" style="--sw-color:#f97316" title="Orange"></button>
             <button class="swatch active" data-color="#1e1e2e" style="--sw-color:#1e1e2e" title="Dark"></button>
           </div>
+          <div class="prop-row hex-input-row">
+            <span class="hex-preview" id="stroke-hex-preview" style="background:#1e1e2e" title="Pick color"></span>
+            <input type="color" id="stroke-color-picker" class="color-picker-hidden" value="#1e1e2e" tabindex="-1" />
+            <input type="text" id="stroke-hex-input" class="hex-input" maxlength="7" placeholder="#1e1e2e" spellcheck="false" autocomplete="off" />
+          </div>
         </div>
 
         <!-- ── Background (fill) ── shown for shapes only -->
@@ -86,6 +91,11 @@
                 <rect x="8" y="8" width="8" height="8" fill="#999"/>
               </svg>
             </button>
+          </div>
+          <div class="prop-row hex-input-row">
+            <span class="hex-preview hex-preview--transparent" id="fill-hex-preview" title="Pick color"></span>
+            <input type="color" id="fill-color-picker" class="color-picker-hidden" value="#ffffff" tabindex="-1" />
+            <input type="text" id="fill-hex-input" class="hex-input" maxlength="7" placeholder="transparent" spellcheck="false" autocomplete="off" />
           </div>
         </div>
 

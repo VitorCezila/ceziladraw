@@ -46,8 +46,21 @@ export function wrapTextLines(
         line = candidate;
       } else {
         if (line) result.push(line);
-        // If a single word is wider than maxWidth, push it anyway to avoid infinite loop
-        line = word;
+        line = '';
+        // Break the word character by character if it exceeds maxWidth
+        if (ctx.measureText(word).width > maxWidth) {
+          for (const ch of word) {
+            const test = line + ch;
+            if (ctx.measureText(test).width <= maxWidth) {
+              line = test;
+            } else {
+              if (line) result.push(line);
+              line = ch;
+            }
+          }
+        } else {
+          line = word;
+        }
       }
     }
 

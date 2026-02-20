@@ -18,6 +18,7 @@ export class TextTool implements Tool {
   private _textarea: HTMLTextAreaElement | null = null;
   private _currentElement: TextElement | null = null;
   private _editingExisting = false;
+  private _editStartSnapshot: ReturnType<typeof snapshotElements> | null = null;
 
   constructor(renderer: Renderer, container: HTMLElement) {
     this.renderer = renderer;
@@ -37,6 +38,7 @@ export class TextTool implements Tool {
     if (this._textarea) this._commit();
     this._editingExisting = true;
     this._currentElement = { ...el };
+    this._editStartSnapshot = snapshotElements();
     this._spawnTextareaForElement(el);
   }
 
@@ -49,7 +51,7 @@ export class TextTool implements Tool {
   }
 
   private _spawnTextarea(worldPoint: Point): void {
-    const { viewport } = getUIState();
+    const { viewport, activeStyle } = getUIState();
     const screenX = worldPoint.x * viewport.zoom + viewport.x;
     const screenY = worldPoint.y * viewport.zoom + viewport.y;
 
@@ -63,7 +65,7 @@ export class TextTool implements Tool {
       angle: 0,
       zIndex: getMaxZIndex() + 1,
       groupId: null,
-      style: { ...getUIState().activeStyle },
+      style: { ...activeStyle },
       version: 0,
       seed: generateSeed(),
       text: '',
@@ -73,14 +75,21 @@ export class TextTool implements Tool {
     };
     this._currentElement = el;
     this._editingExisting = false;
-    this._mountTextarea(screenX, screenY, FONT_SIZE, FONT_FAMILY, '');
+    this._mountTextarea(screenX, screenY, FONT_SIZE, FONT_FAMILY, activeStyle.strokeColor, '');
   }
 
   private _spawnTextareaForElement(el: TextElement): void {
     const { viewport } = getUIState();
     const screenX = el.x * viewport.zoom + viewport.x;
     const screenY = el.y * viewport.zoom + viewport.y;
-    this._mountTextarea(screenX, screenY, el.fontSize, el.fontFamily, el.text);
+    this._mountTextarea(screenX, screenY, el.fontSize, el.fontFamily, el.style.strokeColor, el.text);
+    if (this._textarea) {
+      // Make the textarea invisible — canvas renders the live text instead
+      this._textarea.style.width = `${el.width * viewport.zoom}px`;
+      this._textarea.style.color = 'transparent';
+      this._textarea.style.caretColor = el.style.strokeColor;
+      this._textarea.style.background = 'transparent';
+    }
   }
 
   private _mountTextarea(
@@ -88,6 +97,7 @@ export class TextTool implements Tool {
     screenY: number,
     fontSize: number,
     fontFamily: string,
+    strokeColor: string,
     initialText: string,
   ): void {
     const { viewport } = getUIState();
@@ -97,6 +107,9 @@ export class TextTool implements Tool {
     ta.style.top = `${screenY}px`;
     ta.style.fontSize = `${fontSize * viewport.zoom}px`;
     ta.style.fontFamily = fontFamily;
+    ta.style.color = strokeColor;
+    ta.style.padding = '0';
+    ta.style.lineHeight = '1.4';
     ta.value = initialText;
 
     ta.addEventListener('input', () => this._onInput(ta));
@@ -122,6 +135,15 @@ export class TextTool implements Tool {
     this._currentElement = { ...this._currentElement, text: ta.value };
     ta.style.height = 'auto';
     ta.style.height = `${ta.scrollHeight}px`;
+
+    if (this._editingExisting) {
+      const base = this._currentElement;
+      const height = computeTextHeight(ta.value, base.width, base.fontSize, base.fontFamily);
+      const elements = new Map(getAppState().elements);
+      elements.set(base.id, { ...base, text: ta.value, height });
+      setAppState({ elements });
+      this.renderer.renderScene();
+    }
   }
 
   private _commit(): void {
@@ -131,7 +153,7 @@ export class TextTool implements Tool {
 
     if (this._editingExisting) {
       const height = computeTextHeight(text, base.width, base.fontSize, base.fontFamily);
-      const before = snapshotElements();
+      const before = this._editStartSnapshot ?? snapshotElements();
       if (text.length > 0) {
         const elements = new Map(getAppState().elements);
         elements.set(base.id, { ...base, text, height });
@@ -166,5 +188,6 @@ export class TextTool implements Tool {
     this._textarea = null;
     this._currentElement = null;
     this._editingExisting = false;
+    this._editStartSnapshot = null;
   }
 }

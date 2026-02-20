@@ -48,6 +48,12 @@ function main() {
   const fillSwatches = document.getElementById('fill-swatches')!;
   const opacitySlider = document.getElementById('opacity-slider') as HTMLInputElement;
   const opacityValue = document.getElementById('opacity-value')!;
+  const strokeHexInput = document.getElementById('stroke-hex-input') as HTMLInputElement;
+  const strokeHexPreview = document.getElementById('stroke-hex-preview') as HTMLElement;
+  const strokeColorPicker = document.getElementById('stroke-color-picker') as HTMLInputElement;
+  const fillHexInput = document.getElementById('fill-hex-input') as HTMLInputElement;
+  const fillHexPreview = document.getElementById('fill-hex-preview') as HTMLElement;
+  const fillColorPicker = document.getElementById('fill-color-picker') as HTMLInputElement;
 
   // ── Core setup ──────────────────────────────────────────
   initTheme();
@@ -101,6 +107,9 @@ function main() {
     if (cursorClass[activeTool]) container.classList.add(cursorClass[activeTool]);
 
     zoomLabel.textContent = `${Math.round(viewport.zoom * 100)}%`;
+
+    // Show/hide properties panel when the active tool changes
+    updatePropertiesPanel();
   });
 
   // ── Undo/Redo buttons ────────────────────────────────────
@@ -190,6 +199,66 @@ function main() {
       s.classList.toggle('active', s === btn),
     );
   });
+
+  // ── Hex validation helper ────────────────────────────────
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+  function syncHexPreview(preview: HTMLElement, input: HTMLInputElement, color: string): void {
+    if (color === 'transparent' || !HEX_RE.test(color)) {
+      preview.style.background = '';
+      preview.classList.add('hex-preview--transparent');
+    } else {
+      preview.style.background = color;
+      preview.classList.remove('hex-preview--transparent');
+    }
+    input.value = color === 'transparent' ? '' : color;
+  }
+
+  strokeHexInput.addEventListener('input', () => {
+    const val = strokeHexInput.value.trim();
+    if (HEX_RE.test(val)) {
+      strokeHexInput.classList.remove('invalid');
+      strokeHexPreview.style.background = val;
+      strokeHexPreview.classList.remove('hex-preview--transparent');
+      applyStyleToSelected({ strokeColor: val });
+    } else {
+      strokeHexInput.classList.add('invalid');
+    }
+  });
+
+  fillHexInput.addEventListener('input', () => {
+    const val = fillHexInput.value.trim();
+    if (HEX_RE.test(val)) {
+      fillHexInput.classList.remove('invalid');
+      fillHexPreview.style.background = val;
+      fillHexPreview.classList.remove('hex-preview--transparent');
+      applyStyleToSelected({ fillColor: val });
+    } else {
+      fillHexInput.classList.add('invalid');
+    }
+  });
+
+  // ── Color picker (native) ────────────────────────────────
+  strokeHexPreview.addEventListener('click', () => strokeColorPicker.click());
+  fillHexPreview.addEventListener('click', () => fillColorPicker.click());
+
+  function applyStrokePickerColor(): void {
+    const val = strokeColorPicker.value;
+    applyStyleToSelected({ strokeColor: val });
+    syncHexPreview(strokeHexPreview, strokeHexInput, val);
+    strokeHexInput.classList.remove('invalid');
+  }
+  strokeColorPicker.addEventListener('input', applyStrokePickerColor);
+  strokeColorPicker.addEventListener('change', applyStrokePickerColor);
+
+  function applyFillPickerColor(): void {
+    const val = fillColorPicker.value;
+    applyStyleToSelected({ fillColor: val });
+    syncHexPreview(fillHexPreview, fillHexInput, val);
+    fillHexInput.classList.remove('invalid');
+  }
+  fillColorPicker.addEventListener('input', applyFillPickerColor);
+  fillColorPicker.addEventListener('change', applyFillPickerColor);
 
   // ── Properties panel: stroke width ───────────────────────
   propPanel.addEventListener('click', (e) => {
@@ -372,17 +441,134 @@ function main() {
     navigator.clipboard.writeText(window.location.href).catch(() => {});
   });
 
+  // ── Panel mode helper ─────────────────────────────────────
+  const CREATION_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'text', 'pencil']);
+
+  function getPanelMode(): 'hidden' | 'selection' | 'creation' {
+    const { activeTool } = getUIState();
+    const { selectedIds } = getAppState();
+    if (CREATION_TOOLS.has(activeTool)) return 'creation';
+    if (selectedIds.size > 0) return 'selection';
+    return 'hidden';
+  }
+
+  // ── Shared style-sync helper ──────────────────────────────
+  function syncStyleControls(style: StyleObject, opts: {
+    isShape: boolean;
+    isText: boolean;
+    isRect: boolean;
+    showLayers: boolean;
+    showActions: boolean;
+    textEl?: TextElement;
+  }): void {
+    const { isShape, isText, isRect, showLayers, showActions, textEl } = opts;
+    const show = (section: string, visible: boolean) => {
+      propPanel.querySelector(`[data-section="${section}"]`)?.classList.toggle('show', visible);
+    };
+
+    show('stroke', true);
+    show('fill', isShape);
+    show('stroke-width', isShape);
+    show('stroke-style', isShape);
+    show('sloppiness', isShape);
+    show('edges', isRect);
+    show('font-family', isText);
+    show('font-size', isText);
+    show('text-align', isText);
+    show('opacity', true);
+    show('layers', showLayers);
+    show('actions', showActions);
+
+    // Stroke swatches
+    strokeSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
+      s.classList.toggle('active', s.dataset.color === style.strokeColor);
+    });
+    syncHexPreview(strokeHexPreview, strokeHexInput, style.strokeColor);
+    strokeHexInput.classList.remove('invalid');
+    strokeColorPicker.value = HEX_RE.test(style.strokeColor) ? style.strokeColor : '#000000';
+
+    // Fill swatches
+    fillSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
+      const col = s.dataset.color === 'checker' ? 'transparent' : s.dataset.color;
+      s.classList.toggle('active', col === style.fillColor);
+    });
+    syncHexPreview(fillHexPreview, fillHexInput, style.fillColor);
+    fillHexInput.classList.remove('invalid');
+    fillColorPicker.value = HEX_RE.test(style.fillColor) ? style.fillColor : '#ffffff';
+
+    // Stroke width
+    propPanel.querySelectorAll<HTMLButtonElement>('.sw-btn').forEach((b) => {
+      b.classList.toggle('active', Number(b.dataset.width) === style.strokeWidth);
+    });
+
+    // Stroke style
+    propPanel.querySelectorAll<HTMLButtonElement>('.ss-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.strokeStyle === (style.strokeStyle ?? 'solid'));
+    });
+
+    // Roughness
+    propPanel.querySelectorAll<HTMLButtonElement>('.rough-btn').forEach((b) => {
+      b.classList.toggle('active', Number(b.dataset.roughness) === style.roughness);
+    });
+
+    // Corner style
+    propPanel.querySelectorAll<HTMLButtonElement>('.edge-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.cornerStyle === (style.cornerStyle ?? 'sharp'));
+    });
+
+    // Opacity
+    const opacityPct = Math.round((style.opacity ?? 1) * 100);
+    opacitySlider.value = String(opacityPct);
+    opacityValue.textContent = String(opacityPct);
+
+    // Text-specific
+    if (isText && textEl) {
+      const ffKey = fontFamilyKey(textEl.fontFamily ?? '');
+      propPanel.querySelectorAll<HTMLButtonElement>('.ff-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.fontFamily === ffKey);
+      });
+      propPanel.querySelectorAll<HTMLButtonElement>('.fs-btn').forEach((b) => {
+        b.classList.toggle('active', Number(b.dataset.size) === textEl.fontSize);
+      });
+      propPanel.querySelectorAll<HTMLButtonElement>('.ta-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.align === textEl.textAlign);
+      });
+    }
+  }
+
   // ── updatePropertiesPanel ─────────────────────────────────
   function updatePropertiesPanel(): void {
-    const { selectedIds } = getAppState();
+    const mode = getPanelMode();
 
-    if (selectedIds.size === 0) {
+    if (mode === 'hidden') {
       propPanel.classList.remove('visible');
       return;
     }
 
     propPanel.classList.add('visible');
 
+    if (mode === 'creation') {
+      // Show the panel reflecting activeStyle — no element selected yet
+      const { activeTool, activeStyle } = getUIState();
+      const isTextTool = activeTool === 'text';
+      const isShapeTool = !isTextTool;
+      const isRectTool = activeTool === 'rectangle';
+
+      syncStyleControls(activeStyle, {
+        isShape: isShapeTool,
+        isText: isTextTool,
+        isRect: isRectTool,
+        showLayers: false,
+        showActions: false,
+        textEl: isTextTool
+          ? ({ fontFamily: FONT_FAMILY_MAP['cursive'], fontSize: 20, textAlign: 'left' } as TextElement)
+          : undefined,
+      });
+      return;
+    }
+
+    // mode === 'selection'
+    const { selectedIds } = getAppState();
     const selectedEls = Array.from(selectedIds)
       .map((id) => getAppState().elements.get(id))
       .filter((el): el is DrawableElement => !!el);
@@ -396,78 +582,15 @@ function main() {
     const isShape = selectedEls.every((el) => el.type !== 'text');
     const isRect = selectedEls.every((el) => el.type === 'rectangle');
     const firstEl = selectedEls[0];
-    const firstStyle = firstEl.style;
 
-    const show = (section: string, visible: boolean) => {
-      const el = propPanel.querySelector(`[data-section="${section}"]`);
-      el?.classList.toggle('show', visible);
-    };
-
-    show('stroke', true);
-    show('fill', isShape);
-    show('stroke-width', isShape);
-    show('stroke-style', isShape);
-    show('sloppiness', isShape);
-    show('edges', isRect);
-    show('font-family', isText);
-    show('font-size', isText);
-    show('text-align', isText);
-    show('opacity', true);
-    show('layers', true);
-    show('actions', true);
-
-    // Sync stroke color swatches
-    strokeSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
-      s.classList.toggle('active', s.dataset.color === firstStyle.strokeColor);
+    syncStyleControls(firstEl.style, {
+      isShape,
+      isText,
+      isRect,
+      showLayers: true,
+      showActions: true,
+      textEl: isText ? (firstEl as TextElement) : undefined,
     });
-
-    // Sync fill color swatches
-    fillSwatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach((s) => {
-      const col = s.dataset.color === 'checker' ? 'transparent' : s.dataset.color;
-      s.classList.toggle('active', col === firstStyle.fillColor);
-    });
-
-    // Sync stroke width
-    propPanel.querySelectorAll<HTMLButtonElement>('.sw-btn').forEach((b) => {
-      b.classList.toggle('active', Number(b.dataset.width) === firstStyle.strokeWidth);
-    });
-
-    // Sync stroke style
-    propPanel.querySelectorAll<HTMLButtonElement>('.ss-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.strokeStyle === (firstStyle.strokeStyle ?? 'solid'));
-    });
-
-    // Sync roughness
-    propPanel.querySelectorAll<HTMLButtonElement>('.rough-btn').forEach((b) => {
-      b.classList.toggle('active', Number(b.dataset.roughness) === firstStyle.roughness);
-    });
-
-    // Sync corner style
-    propPanel.querySelectorAll<HTMLButtonElement>('.edge-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.cornerStyle === (firstStyle.cornerStyle ?? 'sharp'));
-    });
-
-    // Sync opacity slider
-    const opacityPct = Math.round((firstStyle.opacity ?? 1) * 100);
-    opacitySlider.value = String(opacityPct);
-    opacityValue.textContent = String(opacityPct);
-
-    // Sync text-specific controls
-    if (isText) {
-      const textEl = firstEl as TextElement;
-      const ffKey = fontFamilyKey(textEl.fontFamily ?? '');
-      propPanel.querySelectorAll<HTMLButtonElement>('.ff-btn').forEach((b) => {
-        b.classList.toggle('active', b.dataset.fontFamily === ffKey);
-      });
-
-      propPanel.querySelectorAll<HTMLButtonElement>('.fs-btn').forEach((b) => {
-        b.classList.toggle('active', Number(b.dataset.size) === textEl.fontSize);
-      });
-
-      propPanel.querySelectorAll<HTMLButtonElement>('.ta-btn').forEach((b) => {
-        b.classList.toggle('active', b.dataset.align === textEl.textAlign);
-      });
-    }
   }
 
   // ── Re-render on state changes ────────────────────────────
