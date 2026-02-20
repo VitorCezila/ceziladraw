@@ -12,7 +12,7 @@ import { initTheme, toggleTheme, getTheme, getDefaultStrokeColor } from './utils
 import { getSortedElements } from './state/selectors';
 import { copySelected, pasteClipboard } from './state/clipboard';
 import type { TextElement, StyleObject, DrawableElement, StrokeStyle, CornerStyle } from './types/elements';
-import { initAuth, signOut } from './auth/authGate';
+import { initAuth, showSignIn, signOut } from './auth/authGate';
 import { initBoardPicker } from './ui/boardPicker';
 import { SUPABASE_ENABLED } from './lib/supabase';
 
@@ -626,9 +626,10 @@ async function bootstrap(): Promise<void> {
         // Board picker resolves the active board ID (null in local mode)
         const boardId = await initBoardPicker(user);
 
-        // Wire sign-out button if we have an authenticated user
         if (SUPABASE_ENABLED && user) {
           _addSignOutButton();
+        } else if (SUPABASE_ENABLED) {
+          _addSignInButton();
         }
 
         // Init storage with the resolved board (loads canvas data)
@@ -678,7 +679,21 @@ function _showError(err: unknown): void {
   console.error('[bootstrap]', err);
 }
 
-// ── Sign-out button ────────────────────────────────────────
+// ── Sign-in / Sign-out buttons ────────────────────────────
+
+function _addSignInButton(): void {
+  if (document.getElementById('btn-signin')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'btn-signin';
+  btn.className = 'btn-signout';
+  btn.textContent = 'Sign in';
+  btn.title = 'Sign in to sync boards';
+  btn.addEventListener('click', () => showSignIn());
+
+  const actionsBar = document.getElementById('actions-bar');
+  if (actionsBar) actionsBar.appendChild(btn);
+}
 
 function _addSignOutButton(): void {
   if (document.getElementById('btn-signout')) return;

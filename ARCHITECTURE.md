@@ -56,7 +56,7 @@ initAuth(onAuth)
     │
     ├── Supabase not configured? → onAuth(null) immediately
     ├── getSession() → has session? → onAuth(user)
-    └── else → _renderSignIn() overlay (Google OAuth)
+    └── no session? → onAuth(null) (guest mode; no overlay; board loads)
     │
     ▼
 initBoardPicker(user)
@@ -72,7 +72,12 @@ initStorage(boardId)
     │
     ▼
 _hideLoading() → main()
+    │
+    └── If guest + Supabase enabled: add "Sign in" button (calls showSignIn()).
+        If authenticated: add "Sign out" button.
 ```
+
+Sign-in overlay is **not** shown on load when unauthenticated. It appears only when the user clicks "Sign in" in the UI. After OAuth redirect (or sign-out), the page reloads and bootstrap runs again with the new auth state.
 
 Error boundary: any uncaught exception in this chain shows a user-facing error card with a Reload button.
 
@@ -82,7 +87,7 @@ Error boundary: any uncaught exception in this chain shows a user-facing error c
 
 When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set, the app runs in **cloud mode**:
 
-- Auth overlay appears if no session; Google OAuth sign-in.
+- Root always shows a working board. If no session (guest), the board loads from localStorage and a "Sign in" button is shown; the auth overlay appears only when the user clicks it. After OAuth redirect, the page reloads and cloud boards load.
 - Board picker shows workspaces and boards; data syncs to Supabase.
 - `localStorage` is still written (optimistic) and used as offline fallback.
 
