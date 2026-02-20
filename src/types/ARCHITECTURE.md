@@ -173,6 +173,7 @@ interface UIState {
   provisionalElement: DrawableElement | null;
   viewport: Viewport;
   activeStyle: StyleObject;   // style applied to all newly created elements
+  currentBoardId: string | null;  // active board when Supabase configured; null in local-only mode
 }
 
 interface HistoryEntry {

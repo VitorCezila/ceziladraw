@@ -61,6 +61,7 @@ interface UIState {
   provisionalElement: DrawableElement | null;  // element being drawn, not yet committed
   viewport: { x: number; y: number; zoom: number };
   activeStyle: StyleObject;  // applied to all newly created elements
+  currentBoardId: string | null;  // active board when Supabase configured; null in local-only mode
 }
 ```
 

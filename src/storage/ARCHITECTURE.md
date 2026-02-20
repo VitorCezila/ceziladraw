@@ -1,5 +1,7 @@
 # `src/storage/` — Persistence
 
+Persistence layer — localStorage (always) + Supabase cloud (when configured). Strategy: cloud-first on load; optimistic localStorage write + debounced cloud sync on save.
+
 ---
 
 ## Files
@@ -7,7 +9,7 @@
 | File | Purpose |
 |------|---------|
 | `serializer.ts` | `AppState` ↔ JSON (format v1) |
-| `localStorage.ts` | Auto-save, export to file, import from file |
+| `localStorage.ts` | Load/save orchestration, cloud sync, export/import |
 
 ---
 
@@ -38,26 +40,28 @@ Parses JSON defensively — returns `null` on any error rather than throwing. Re
 
 ## localStorage (`localStorage.ts`)
 
-### Auto-Save
+### Strategy
 
-`initStorage()` is called once at app startup:
+1. **On load**: Try cloud first when `boardId` is provided; fall back to `localStorage` if offline or unauthenticated.
+2. **On save**: Write to `localStorage` immediately (optimistic). Debounce cloud sync by 500 ms — only the last change within a burst is actually sent.
+3. **Cloud failure**: Non-fatal; data is safe in localStorage; will retry on next save cycle.
 
-1. Reads `ceziladraw_state` from `localStorage`. If found and valid, loads it via `setAppState`.
-2. Subscribes to `AppState` changes. On every change, **debounces** a save by 500 ms — only the last change within a burst is actually written.
+### `initStorage(boardId)`
 
-```ts
-subscribeToAppState(() => {
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(() => {
-    localStorage.setItem(STORAGE_KEY, serializeState(getAppState()));
-  }, 500);
-});
-```
+Called once at app startup, after auth and board picker resolve.
 
-### Export
+1. **Load**: If `SUPABASE_ENABLED` and `boardId`, call `loadBoardData(boardId)`. On success, deserialize and `setAppState`. On failure or offline, fall back to `localStorage.getItem(STORAGE_KEY)`.
+2. **Subscribe**: On every `AppState` change:
+   - `localStorage.setItem(STORAGE_KEY, serializeState(getAppState()))` — immediate
+   - Debounce 500 ms → `_syncToCloud()` — calls `saveBoardData(currentBoardId, serialized, elementCount)`
 
-`exportToJson()` serializes the current state and triggers a browser download of `ceziladraw.json`.
+### `_syncToCloud()`
 
-### Import
+Runs only when `SUPABASE_ENABLED` and `currentBoardId` exist. Writes to `board_data` via `saveBoardData`. If the write fails, logs a warning; the next save cycle will retry.
 
-`importFromJson()` opens a file picker, reads the selected `.json` file, deserializes it, and calls `setAppState` — completely replacing the current canvas contents.
+### Export / Import
+
+- **exportToJson()**: Serializes current state and triggers a browser download of `ceziladraw.json`.
+- **importFromJson()**: Opens a file picker, reads the selected `.json` file, deserializes it, and calls `setAppState` — completely replacing the current canvas contents.
+
+These are file-based only; no cloud involvement.

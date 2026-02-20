@@ -82,16 +82,18 @@ Moves all selected elements simultaneously. Saves `_elementStartPositions` at `p
 
 `_activeHandle` stores the handle type and index. `applyResize(startEl, handleIndex, worldPoint)` computes the new geometry each frame.
 
-**Text element special case**: when resizing a text element, `fontSize` is scaled proportionally to the width change:
+**Text element special case**: behavior depends on the handle:
 
-```ts
-const widthRatio = newGeom.width / startTextEl.width;
-const newFontSize = Math.max(8, Math.round(startTextEl.fontSize * widthRatio));
-```
-
-This uses `_resizeStartEl` as the stable baseline throughout the drag, so repeated `pointermove` events always scale from the original font size.
+- **Corner handles (0, 2, 4, 6)**: both `width` and `height` change. `fontSize` is scaled proportionally to the width change so the text grows/shrinks with the box:
+  ```ts
+  const widthRatio = newGeom.width / startTextEl.width;
+  const newFontSize = Math.max(8, Math.round(startTextEl.fontSize * widthRatio));
+  ```
+- **Edge handles (MR=3, ML=7)**: only `width` changes. `fontSize` is unchanged — the user adjusts the wrap width only, not the font size. This allows widening a narrow text box without the font exploding.
 
 Height-only handles (TC=1, BC=5) produce `widthRatio = 1` → font size is unchanged.
+
+`_resizeStartEl` is the stable baseline throughout the drag.
 
 ### Rotation
 
@@ -117,12 +119,16 @@ Manages a floating `<textarea>` overlay for text input.
 
 ### Editing Existing Text (`beginEdit(el)`)
 
-Called from `ToolManager.beginEditText`. Opens a `<textarea>` pre-filled with the element's current text at its canvas position. On commit:
+Called from `ToolManager.beginEditText`. Opens a `<textarea>` pre-filled with the element's current text at its canvas position.
+
+**Real-time canvas update**: The textarea is made invisible (`color: transparent`, `caretColor` set to the element's stroke color) so the user sees only the canvas-rendered text. On every `input` event, `_onInput` calls `setAppState` and `renderScene` — the canvas updates in real time. There is no separate "preview"; the user edits the live canvas text.
+
+On commit:
 
 - If text is non-empty → updates the existing element in `AppState` (same `id`).
 - If text is empty → removes the element from `AppState`.
 
-Both paths push a history entry.
+Both paths push a history entry. `_editStartSnapshot` is captured at `beginEdit` for correct undo history.
 
 ### Textarea Positioning
 
@@ -130,6 +136,7 @@ Both paths push a history entry.
 screenX = el.x * viewport.zoom + viewport.x
 screenY = el.y * viewport.zoom + viewport.y
 ta.style.fontSize = `${el.fontSize * viewport.zoom}px`
+ta.style.width = `${el.width * viewport.zoom}px`  // for existing text
 ```
 
 The textarea is appended to `textContainer` (the `#canvas-container`), positioned absolutely over the canvas at the correct screen position.

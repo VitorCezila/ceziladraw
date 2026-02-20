@@ -45,8 +45,12 @@ Public API:
 | Method | Description |
 |--------|-------------|
 | `renderScene()` | Clears and redraws the scene canvas |
-| `renderInteraction(marquee\|null)` | Clears and redraws the interaction canvas |
+| `renderInteraction(marquee\|null)` | Clears and redraws the interaction canvas; stores `marquee` in `_pendingMarquee` |
 | `requestFullRender()` | Queues both renders in a single `requestAnimationFrame` |
+
+### Marquee Persistence
+
+`_pendingMarquee: BoundingBox | null` stores the last marquee passed to `renderInteraction`. During a marquee drag, `SelectTool.onPointerMove` calls `setAppState({ selectedIds })`, which triggers `subscribeToAppState` → `renderer.requestFullRender()`. Without `_pendingMarquee`, `requestFullRender` would call `renderInteraction(null)` in the next RAF frame, clearing the marquee. By storing `marquee` in `renderInteraction` and re-using `_pendingMarquee` in `requestFullRender`, the marquee persists across frames until `SelectTool.onPointerUp` explicitly calls `renderInteraction(null)`.
 
 Both canvases apply the same viewport transform before drawing:
 

@@ -15,8 +15,11 @@ src/
 ├── canvas/         Canvas setup and raw event handling
 ├── renderer/       Two-layer canvas rendering pipeline
 ├── tools/          Tool implementations dispatched by ToolManager
-├── storage/        Serialization and localStorage persistence
-├── main.ts         App bootstrap — wires UI controls to state
+├── storage/        Serialization, localStorage + Supabase cloud persistence
+├── auth/           Auth gate, Google OAuth sign-in overlay
+├── lib/            Supabase client, typed DB helpers (workspaces, boards)
+├── ui/             Board picker — switch/create/rename/delete boards
+├── main.ts         App wiring — properties panel, toolbar, shortcuts
 └── style.css       CSS custom properties, dark/light themes, layout
 ```
 
@@ -30,8 +33,64 @@ Each folder has its own `ARCHITECTURE.md` with detailed documentation:
 | [`src/renderer/`](src/renderer/ARCHITECTURE.md) | Dual-canvas pipeline, DPR, element renderers, selection overlay |
 | [`src/tools/`](src/tools/ARCHITECTURE.md) | Tool interface, all tool implementations, double-click editing |
 | [`src/canvas/`](src/canvas/ARCHITECTURE.md) | `CanvasManager`, `EventHandler`, full event flow |
-| [`src/storage/`](src/storage/ARCHITECTURE.md) | JSON serialization, localStorage auto-save |
+| [`src/storage/`](src/storage/ARCHITECTURE.md) | JSON serialization, cloud + localStorage persistence |
+| [`src/auth/`](src/auth/ARCHITECTURE.md) | Auth gate, Google OAuth, sign-in overlay |
+| [`src/lib/`](src/lib/ARCHITECTURE.md) | Supabase client, workspace/board DB helpers |
+| [`src/ui/`](src/ui/ARCHITECTURE.md) | Board picker UI |
 | [`src/utils/`](src/utils/ARCHITECTURE.md) | `textLayout`, `math`, `color`, `id`, `theme` |
+
+---
+
+## Bootstrap Flow
+
+On load, `bootstrap()` runs before the main canvas UI:
+
+```
+bootstrap()
+    │
+    ├── initTheme()
+    ├── _showLoading()
+    │
+    ▼
+initAuth(onAuth)
+    │
+    ├── Supabase not configured? → onAuth(null) immediately
+    ├── getSession() → has session? → onAuth(user)
+    └── else → _renderSignIn() overlay (Google OAuth)
+    │
+    ▼
+initBoardPicker(user)
+    │
+    ├── Local mode? → currentBoardId = null
+    └── Cloud mode? → getOrCreatePersonalWorkspace, listBoards, currentBoardId
+    │
+    ▼
+initStorage(boardId)
+    │
+    ├── Load from cloud (if boardId) or localStorage
+    └── Subscribe to AppState (debounced save)
+    │
+    ▼
+_hideLoading() → main()
+```
+
+Error boundary: any uncaught exception in this chain shows a user-facing error card with a Reload button.
+
+---
+
+## Cloud vs Local Mode
+
+When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set, the app runs in **cloud mode**:
+
+- Auth overlay appears if no session; Google OAuth sign-in.
+- Board picker shows workspaces and boards; data syncs to Supabase.
+- `localStorage` is still written (optimistic) and used as offline fallback.
+
+When these env vars are missing, **local-only mode**:
+
+- No auth overlay; `onAuth(null)` immediately.
+- Single "Local Board"; no cloud sync.
+- `localStorage` only (`ceziladraw_state` key).
 
 ---
 
@@ -51,7 +110,7 @@ User Gesture (pointer / wheel / keyboard)
         │
         ├──▶ AppState      elements, selectedIds (persisted + history)
         │
-        └──▶ UIState       provisionalElement, viewport, activeStyle (ephemeral)
+        └──▶ UIState       provisionalElement, viewport, activeStyle, currentBoardId (ephemeral)
                 │
                 ▼
           Renderer          SceneRenderer + InteractionRenderer
@@ -125,7 +184,9 @@ History stores diffs, not full snapshots — only the changed portions of `AppSt
 
 ```bash
 npm install
-npm run dev      # Vite dev server
+npm run dev      # Vite dev server (bootstrap → auth/board → main)
 npm run build    # Production build
 npm run preview  # Serve production build locally
 ```
+
+For cloud mode, create a `.env` file with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`).

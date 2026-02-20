@@ -70,7 +70,7 @@ Uses a shared 1×1 off-screen `<canvas>` context for font measurement — works 
 Splits `text` into display lines that fit within `maxWidth` pixels:
 - Respects explicit `\n` line breaks.
 - Wraps at word boundaries.
-- If a single word is wider than `maxWidth`, it is pushed as-is (prevents an infinite loop).
+- If a single word is wider than `maxWidth`, it is broken **character by character** so each line stays within the box. Prevents text overflow when typing long strings without spaces (e.g. "Saaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
 
 ### `computeTextHeight(text, maxWidth, fontSize, fontFamily)` → `number`
 
