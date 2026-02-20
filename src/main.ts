@@ -12,6 +12,9 @@ import { initTheme, toggleTheme, getTheme, getDefaultStrokeColor } from './utils
 import { getSortedElements } from './state/selectors';
 import { copySelected, pasteClipboard } from './state/clipboard';
 import type { TextElement, StyleObject, DrawableElement, StrokeStyle, CornerStyle } from './types/elements';
+import { initAuth, signOut } from './auth/authGate';
+import { initBoardPicker } from './ui/boardPicker';
+import { SUPABASE_ENABLED } from './lib/supabase';
 
 const ZOOM_STEP = 0.15;
 
@@ -56,8 +59,7 @@ function main() {
   const fillColorPicker = document.getElementById('fill-color-picker') as HTMLInputElement;
 
   // ── Core setup ──────────────────────────────────────────
-  initTheme();
-  initStorage();
+  // Note: initTheme() and initStorage() are called by bootstrap() before main()
   const canvasManager = new CanvasManager(container);
   const renderer = new Renderer(canvasManager.sceneCanvas, canvasManager.interactionCanvas);
   const toolManager = new ToolManager(renderer, textContainer, container);
@@ -611,4 +613,88 @@ function main() {
   }
 }
 
-main();
+// ── Bootstrap: auth → board → app ─────────────────────────
+
+async function bootstrap(): Promise<void> {
+  initTheme();
+
+  const loadingEl = _showLoading();
+
+  try {
+    await initAuth(async (user) => {
+      try {
+        // Board picker resolves the active board ID (null in local mode)
+        const boardId = await initBoardPicker(user);
+
+        // Wire sign-out button if we have an authenticated user
+        if (SUPABASE_ENABLED && user) {
+          _addSignOutButton();
+        }
+
+        // Init storage with the resolved board (loads canvas data)
+        await initStorage(boardId);
+
+        _hideLoading(loadingEl);
+        main();
+      } catch (err) {
+        _hideLoading(loadingEl);
+        _showError(err);
+      }
+    });
+  } catch (err) {
+    _hideLoading(loadingEl);
+    _showError(err);
+  }
+}
+
+// ── Loading overlay ────────────────────────────────────────
+
+function _showLoading(): HTMLElement {
+  const el = document.createElement('div');
+  el.id = 'app-loading';
+  el.innerHTML = `<div class="loading-spinner"></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+function _hideLoading(el: HTMLElement): void {
+  el.remove();
+}
+
+// ── Error boundary ─────────────────────────────────────────
+
+function _showError(err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  const el = document.createElement('div');
+  el.id = 'app-error';
+  el.innerHTML = `
+    <div class="error-card">
+      <h2>Something went wrong</h2>
+      <p>${message}</p>
+      <button onclick="window.location.reload()">Reload</button>
+    </div>
+  `;
+  document.body.appendChild(el);
+  console.error('[bootstrap]', err);
+}
+
+// ── Sign-out button ────────────────────────────────────────
+
+function _addSignOutButton(): void {
+  if (document.getElementById('btn-signout')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'btn-signout';
+  btn.className = 'btn-signout';
+  btn.textContent = 'Sign out';
+  btn.title = 'Sign out';
+  btn.addEventListener('click', async () => {
+    await signOut();
+    window.location.reload();
+  });
+
+  const actionsBar = document.getElementById('actions-bar');
+  if (actionsBar) actionsBar.appendChild(btn);
+}
+
+bootstrap();

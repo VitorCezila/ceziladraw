@@ -440,3 +440,250 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 }
 
 #btn-theme:hover { transform: rotate(20deg); }
+
+/* ── Auth overlay ───────────────────────────────────────── */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 40px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,.24);
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-muted, #888);
+  margin: 0;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 120ms;
+  width: 100%;
+  justify-content: center;
+}
+
+.auth-btn:hover { opacity: 0.88; }
+
+.auth-note {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Loading overlay ────────────────────────────────────── */
+#app-loading {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Error boundary ─────────────────────────────────────── */
+#app-error {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.error-card h2 { margin: 0; color: var(--text); }
+.error-card p  { margin: 0; color: var(--text-muted, #888); font-size: 13px; word-break: break-word; }
+.error-card button {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ── Sign-out button ────────────────────────────────────── */
+.btn-signout {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 120ms;
+}
+.btn-signout:hover { background: var(--hover-bg, rgba(255,255,255,.06)); }
+
+/* ── Board picker trigger ───────────────────────────────── */
+.board-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Board picker panel ─────────────────────────────────── */
+.board-picker-panel {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  width: 220px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  z-index: 500;
+  overflow: hidden;
+}
+
+.bp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bp-workspace-name {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted, #888);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bp-new-btn {
+  font-size: 12px;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 120ms;
+}
+.bp-new-btn:hover { opacity: .85; }
+
+.bp-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.bp-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 4px;
+  transition: background 100ms;
+}
+.bp-item:hover { background: var(--hover-bg, rgba(255,255,255,.06)); }
+.bp-item--active { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+
+.bp-item-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bp-item-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.bp-item:hover .bp-item-actions { opacity: 1; }
+
+.bp-rename,
+.bp-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 100ms;
+}
+.bp-rename:hover,
+.bp-delete:hover { background: var(--hover-bg, rgba(255,255,255,.1)); }

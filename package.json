@@ -21,6 +21,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "roughjs": "^4.6.6"
   }
 }

@@ -28,6 +28,8 @@ export interface UIState {
   provisionalElement: DrawableElement | null;
   viewport: Viewport;
   activeStyle: StyleObject;
+  /** Active board ID when Supabase is configured; null in local-only mode. */
+  currentBoardId: string | null;
 }
 
 export interface HistoryEntry {
