@@ -50,7 +50,7 @@ async function _loadState(boardId: string | null): Promise<ReturnType<typeof des
         if (state) return state;
       }
     } catch (err) {
-      console.warn('[storage] Cloud load failed, falling back to localStorage:', err);
+      console.warn('[storage] cloud load failed, using local copy');
     }
   }
 
@@ -76,7 +76,7 @@ async function _syncToCloud(): Promise<void> {
     await saveBoardData(currentBoardId, serialized, state.elements.size);
   } catch (err) {
     // Non-fatal: the data is safe in localStorage; will retry on next save
-    console.warn('[storage] Cloud sync failed (will retry):', err);
+    console.warn('[storage] cloud sync failed, will retry');
   }
 }
 

@@ -665,18 +665,17 @@ function _hideLoading(el: HTMLElement): void {
 // ── Error boundary ─────────────────────────────────────────
 
 function _showError(err: unknown): void {
-  const message = err instanceof Error ? err.message : String(err);
   const el = document.createElement('div');
   el.id = 'app-error';
   el.innerHTML = `
     <div class="error-card">
       <h2>Something went wrong</h2>
-      <p>${message}</p>
+      <p>Please try again. If the problem continues, reload the page.</p>
       <button onclick="window.location.reload()">Reload</button>
     </div>
   `;
   document.body.appendChild(el);
-  console.error('[bootstrap]', err);
+  console.error('[bootstrap] error');
 }
 
 // ── Sign-in / Sign-out buttons ────────────────────────────
@@ -688,7 +687,7 @@ function _addSignInButton(): void {
   btn.id = 'btn-signin';
   btn.className = 'btn-signout';
   btn.textContent = 'Sign in';
-  btn.title = 'Sign in to sync boards';
+  btn.title = 'Sign in to sync your boards';
   btn.addEventListener('click', () => showSignIn());
 
   const actionsBar = document.getElementById('actions-bar');
