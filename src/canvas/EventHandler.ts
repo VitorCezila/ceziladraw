@@ -116,7 +116,7 @@ export class EventHandler {
     const { viewport } = getUIState();
 
     if (e.ctrlKey || e.metaKey) {
-      const delta = -e.deltaY * 0.01;
+      const delta = Math.max(-0.05, Math.min(0.05, -e.deltaY * 0.003));
       const newZoom = Math.max(0.05, Math.min(20, viewport.zoom * (1 + delta)));
       const rect = this.canvas.getBoundingClientRect();
       setViewport(zoomOnPoint(viewport, e.clientX - rect.left, e.clientY - rect.top, newZoom));
