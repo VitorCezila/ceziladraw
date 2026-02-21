@@ -2,7 +2,7 @@ import type { Tool } from './ToolManager';
 import type { Renderer } from '../renderer/Renderer';
 import type { Point } from '../types/geometry';
 import type { PencilElement } from '../types/elements';
-import { setProvisionalElement, setActiveTool, getUIState } from '../state/uiState';
+import { setProvisionalElement, getUIState } from '../state/uiState';
 import { addElement } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import { generateId, generateSeed } from '../utils/id';
@@ -68,7 +68,6 @@ export class PencilTool implements Tool {
     pushHistory({ elements: before }, { elements: snapshotElements() });
 
     setProvisionalElement(null);
-    setActiveTool('select');
 
     this.renderer.renderScene();
     this.renderer.renderInteraction(null);
