@@ -639,12 +639,12 @@ async function bootstrap(): Promise<void> {
         main();
       } catch (err) {
         _hideLoading(loadingEl);
-        _showError(err);
+        _showError();
       }
     });
   } catch (err) {
     _hideLoading(loadingEl);
-    _showError(err);
+    _showError();
   }
 }
 
@@ -664,7 +664,7 @@ function _hideLoading(el: HTMLElement): void {
 
 // ── Error boundary ─────────────────────────────────────────
 
-function _showError(err: unknown): void {
+function _showError(): void {
   const el = document.createElement('div');
   el.id = 'app-error';
   el.innerHTML = `
