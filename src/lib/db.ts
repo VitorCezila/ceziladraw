@@ -33,30 +33,21 @@ export interface BoardData {
 
 /**
  * Returns the user's personal workspace, creating it on first login.
+ * Uses an RPC (SECURITY DEFINER) so the insert runs server-side and
+ * avoids RLS 42501 when auth.uid() is not available in the client INSERT context.
  */
-export async function getOrCreatePersonalWorkspace(userId: string): Promise<Workspace | null> {
+export async function getOrCreatePersonalWorkspace(_userId: string): Promise<Workspace | null> {
   if (!SUPABASE_ENABLED || !supabase) return null;
 
-  const { data: existing } = await supabase
-    .from('workspaces')
-    .select('*')
-    .eq('owner_id', userId)
-    .limit(1)
-    .single();
-
-  if (existing) return existing as Workspace;
-
-  const { data: created, error } = await supabase
-    .from('workspaces')
-    .insert({ name: 'My Workspace', owner_id: userId })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('get_or_create_personal_workspace', {
+    workspace_name: 'My Workspace',
+  });
 
   if (error) {
-    console.error('[db] Failed to create workspace:', error.message);
+    console.error('[db] workspace init failed');
     return null;
   }
-  return created as Workspace;
+  return data as Workspace;
 }
 
 // ── Board helpers ──────────────────────────────────────────
@@ -71,7 +62,7 @@ export async function listBoards(workspaceId: string): Promise<Board[]> {
     .order('updated_at', { ascending: false });
 
   if (error) {
-    console.error('[db] Failed to list boards:', error.message);
+    console.error('[db] list boards failed');
     return [];
   }
   return (data ?? []) as Board[];
@@ -87,7 +78,7 @@ export async function createBoard(workspaceId: string, name: string): Promise<Bo
     .single();
 
   if (error) {
-    console.error('[db] Failed to create board:', error.message);
+    console.error('[db] create board failed');
     return null;
   }
 
@@ -109,7 +100,7 @@ export async function renameBoard(boardId: string, name: string): Promise<void> 
     .update({ name })
     .eq('id', boardId);
 
-  if (error) console.error('[db] Failed to rename board:', error.message);
+  if (error) console.error('[db] rename board failed');
 }
 
 export async function deleteBoard(boardId: string): Promise<void> {
@@ -117,7 +108,7 @@ export async function deleteBoard(boardId: string): Promise<void> {
 
   // board_data is deleted via ON DELETE CASCADE
   const { error } = await supabase.from('boards').delete().eq('id', boardId);
-  if (error) console.error('[db] Failed to delete board:', error.message);
+  if (error) console.error('[db] delete board failed');
 }
 
 // ── Board data helpers ─────────────────────────────────────
@@ -132,7 +123,7 @@ export async function loadBoardData(boardId: string): Promise<object | null> {
     .single();
 
   if (error) {
-    console.error('[db] Failed to load board data:', error.message);
+    console.error('[db] load board data failed');
     return null;
   }
   return data?.elements ?? null;
@@ -151,7 +142,7 @@ export async function saveBoardData(
   );
 
   if (dataErr) {
-    console.error('[db] Failed to save board data:', dataErr.message);
+    console.error('[db] save board data failed');
     return;
   }
 

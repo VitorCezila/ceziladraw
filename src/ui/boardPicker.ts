@@ -16,6 +16,7 @@ import {
   type Board,
   type Workspace,
 } from '../lib/db';
+import { getCurrentUser } from '../auth/authGate';
 import { getUIState, setUIState } from '../state/uiState';
 import { getAppState, setAppState } from '../state/appState';
 import { serializeState, deserializeState } from '../storage/serializer';
@@ -134,12 +135,22 @@ function _renderPanel(): void {
 
   const { currentBoardId } = getUIState();
   const isCloud = SUPABASE_ENABLED && _workspace;
+  const userLoggedInNoWorkspace = SUPABASE_ENABLED && getCurrentUser() && !_workspace;
 
   _panel.innerHTML = `
     <div class="bp-header">
-      <span class="bp-workspace-name">${_workspace?.name ?? 'Local Mode'}</span>
+      <span class="bp-workspace-name">${_workspace?.name ?? (userLoggedInNoWorkspace ? 'Cloud' : 'Local Mode')}</span>
       ${isCloud ? `<button class="bp-new-btn" id="bp-new-board">+ New board</button>` : ''}
     </div>
+    ${
+      userLoggedInNoWorkspace
+        ? `
+    <div class="bp-error-state">
+      <p class="bp-error-message">Your boards couldn't be loaded right now. Try again in a moment.</p>
+      <button class="bp-retry-btn" id="bp-retry-workspace">Try again</button>
+    </div>
+    `
+        : `
     <ul class="bp-list">
       ${
         isCloud
@@ -159,8 +170,11 @@ function _renderPanel(): void {
           : `<li class="bp-item bp-item--active"><span class="bp-item-name">Local Board</span></li>`
       }
     </ul>
+    `
+    }
   `;
 
+  _panel.querySelector('#bp-retry-workspace')?.addEventListener('click', () => _retryLoadWorkspace());
   _panel.querySelector('#bp-new-board')?.addEventListener('click', _createNewBoard);
 
   _panel.querySelectorAll<HTMLElement>('.bp-item-name[data-id]').forEach((el) => {
@@ -177,6 +191,28 @@ function _renderPanel(): void {
 }
 
 // ── Actions ────────────────────────────────────────────────
+
+async function _retryLoadWorkspace(): Promise<void> {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  _workspace = await getOrCreatePersonalWorkspace(user.id);
+  if (!_workspace) {
+    _renderPanel();
+    return;
+  }
+
+  _boards = await listBoards(_workspace.id);
+  if (_boards.length === 0) {
+    const board = await createBoard(_workspace.id, 'My First Board');
+    if (board) _boards = [board];
+  }
+
+  const firstBoardId = _boards[0]?.id ?? null;
+  setUIState({ currentBoardId: firstBoardId });
+  _updateLabel(firstBoardId);
+  _renderPanel();
+}
 
 async function _switchBoard(boardId: string): Promise<void> {
   if (!_workspace) return;
