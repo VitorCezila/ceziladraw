@@ -42,6 +42,8 @@ export class EventHandler {
     window.addEventListener('keyup', this._onKeyUp);
   }
 
+  // EventHandler lives for the entire app lifetime; destroy() is not called in normal operation.
+  // It exists for completeness and for use in tests or future teardown scenarios.
   destroy(): void {
     const c = this.canvas;
     c.removeEventListener('pointerdown', this._onPointerDown);

@@ -698,8 +698,13 @@ function _addSignOutButton(): void {
   btn.textContent = 'Sign out';
   btn.title = 'Sign out';
   btn.addEventListener('click', async () => {
-    await signOut();
-    window.location.reload();
+    try {
+      await signOut();
+    } catch (err) {
+      console.warn('[auth] sign-out error, reloading anyway:', err);
+    } finally {
+      window.location.reload();
+    }
   });
 
   const actionsBar = document.getElementById('actions-bar');

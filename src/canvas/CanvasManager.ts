@@ -11,7 +11,11 @@ export class CanvasManager {
 
   constructor(container: HTMLElement) {
     this.sceneCanvas = this._createCanvas('scene-canvas');
+    this.sceneCanvas.setAttribute('role', 'application');
+    this.sceneCanvas.setAttribute('aria-label', 'Drawing area. Use the tools in the toolbar to draw.');
+
     this.interactionCanvas = this._createCanvas('interaction-canvas');
+    this.interactionCanvas.setAttribute('aria-hidden', 'true');
 
     container.appendChild(this.sceneCanvas);
     container.appendChild(this.interactionCanvas);

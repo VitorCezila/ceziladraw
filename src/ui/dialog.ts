@@ -52,11 +52,12 @@ function _createBackdrop(): BackdropResult {
   return { backdrop, dialog };
 }
 
-function _closeWithAnimation(backdrop: HTMLDivElement): Promise<void> {
+function _closeWithAnimation(backdrop: HTMLDivElement, triggerElement: HTMLElement | null): Promise<void> {
   return new Promise((resolve) => {
     backdrop.classList.add('closing');
     setTimeout(() => {
       backdrop.remove();
+      triggerElement?.focus();
       resolve();
     }, 150);
   });
@@ -82,6 +83,7 @@ export function showConfirm(options: ConfirmOptions): Promise<boolean> {
   } = options;
 
   return new Promise((resolve) => {
+    const triggerElement = document.activeElement as HTMLElement | null;
     const { backdrop, dialog } = _createBackdrop();
 
     // Icon
@@ -127,7 +129,7 @@ export function showConfirm(options: ConfirmOptions): Promise<boolean> {
       if (settled) return;
       settled = true;
       cleanup();
-      _closeWithAnimation(backdrop).then(() => resolve(result));
+      _closeWithAnimation(backdrop, triggerElement).then(() => resolve(result));
     }
 
     function onKeyDown(e: KeyboardEvent): void {
@@ -175,6 +177,7 @@ export function showPrompt(options: PromptOptions): Promise<string | null> {
   } = options;
 
   return new Promise((resolve) => {
+    const triggerElement = document.activeElement as HTMLElement | null;
     const { backdrop, dialog } = _createBackdrop();
 
     // Icon
@@ -233,7 +236,7 @@ export function showPrompt(options: PromptOptions): Promise<string | null> {
       if (settled) return;
       settled = true;
       cleanup();
-      _closeWithAnimation(backdrop).then(() => resolve(result));
+      _closeWithAnimation(backdrop, triggerElement).then(() => resolve(result));
     }
 
     function confirm(): void {
