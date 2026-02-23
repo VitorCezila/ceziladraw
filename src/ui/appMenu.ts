@@ -2,6 +2,7 @@ import { exportToJson, importFromJson } from '../storage/localStorage';
 import { setAppState } from '../state/appState';
 import { pushHistory, snapshotElements } from '../state/history';
 import type { Renderer } from '../renderer/Renderer';
+import { showConfirm } from './dialog';
 
 export function initAppMenu(renderer: Renderer): void {
   const btn = document.getElementById('btn-app-menu')!;
@@ -62,8 +63,14 @@ export function initAppMenu(renderer: Renderer): void {
     el.appendChild(makeItem(
       trashSvg(),
       'Reset Board',
-      () => {
-        if (confirm('Reset the board? All elements will be deleted. This cannot be undone.')) {
+      async () => {
+        const ok = await showConfirm({
+          title: 'Reset Board',
+          message: 'All elements will be deleted. This cannot be undone.',
+          confirmLabel: 'Reset',
+          danger: true,
+        });
+        if (ok) {
           const before = snapshotElements();
           setAppState({ elements: new Map(), selectedIds: new Set() });
           pushHistory({ elements: before }, { elements: new Map() });
@@ -88,7 +95,7 @@ export function initAppMenu(renderer: Renderer): void {
     return el;
   }
 
-  function makeItem(icon: SVGElement, label: string, onClick: () => void, extraClass?: string): HTMLButtonElement {
+  function makeItem(icon: SVGElement, label: string, onClick: () => void | Promise<void>, extraClass?: string): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.className = 'app-menu-item' + (extraClass ? ` ${extraClass}` : '');
     btn.appendChild(icon);

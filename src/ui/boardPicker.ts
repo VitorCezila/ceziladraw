@@ -7,6 +7,7 @@
 
 import type { User } from '@supabase/supabase-js';
 import { SUPABASE_ENABLED } from '../lib/supabase';
+import { showConfirm, showPrompt } from './dialog';
 import {
   getOrCreatePersonalWorkspace,
   listBoards,
@@ -235,7 +236,7 @@ async function _switchBoard(boardId: string): Promise<void> {
 async function _createNewBoard(): Promise<void> {
   if (!_workspace) return;
 
-  const name = prompt('Board name:', 'Untitled Board');
+  const name = await showPrompt({ title: 'New Board', placeholder: 'Board name', defaultValue: 'Untitled Board' });
   if (!name) return;
 
   const board = await createBoard(_workspace.id, name);
@@ -249,7 +250,7 @@ async function _renameBoard(boardId: string): Promise<void> {
   const board = _boards.find((b) => b.id === boardId);
   if (!board) return;
 
-  const name = prompt('New name:', board.name);
+  const name = await showPrompt({ title: 'Rename Board', placeholder: 'Board name', defaultValue: board.name });
   if (!name || name === board.name) return;
 
   await renameBoard(boardId, name);
@@ -261,7 +262,13 @@ async function _renameBoard(boardId: string): Promise<void> {
 async function _deleteBoard(boardId: string): Promise<void> {
   const board = _boards.find((b) => b.id === boardId);
   if (!board) return;
-  if (!confirm(`Delete "${board.name}"? This cannot be undone.`)) return;
+  const ok = await showConfirm({
+    title: 'Delete Board',
+    message: `Delete "${board.name}"? This cannot be undone.`,
+    confirmLabel: 'Delete',
+    danger: true,
+  });
+  if (!ok) return;
 
   await deleteBoard(boardId);
   _boards = _boards.filter((b) => b.id !== boardId);
