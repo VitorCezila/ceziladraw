@@ -99,12 +99,19 @@ function _renderSignIn(): void {
   `;
   document.body.appendChild(overlay);
 
-  document.getElementById('btn-google-signin')!.addEventListener('click', async () => {
+  const signInBtn = document.getElementById('btn-google-signin')!;
+  signInBtn.addEventListener('click', async () => {
     if (!supabase) return;
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[auth] sign-in failed:', err);
+      signInBtn.textContent = 'Sign in failed — try again';
+    }
   });
 }
 

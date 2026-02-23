@@ -20,13 +20,19 @@ export function initAppMenu(renderer: Renderer): void {
   function open(): void {
     panel = buildPanel();
     document.getElementById('app')!.appendChild(panel);
-    setTimeout(() => document.addEventListener('click', onClickOutside), 0);
+    // Move focus to first interactive item so keyboard users can navigate immediately
+    setTimeout(() => {
+      (panel?.querySelector<HTMLElement>('.app-menu-item'))?.focus();
+      document.addEventListener('click', onClickOutside);
+    }, 0);
   }
 
   function close(): void {
     panel?.remove();
     panel = null;
     document.removeEventListener('click', onClickOutside);
+    // Restore focus to the button that opened the menu
+    btn.focus();
   }
 
   function onClickOutside(e: MouseEvent): void {
