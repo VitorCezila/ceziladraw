@@ -263,13 +263,19 @@
         <button id="zoom-reset" title="Reset zoom">⊙</button>
       </div>
 
+      <!-- Top-left App Menu button -->
+      <button id="btn-app-menu" title="Menu" aria-label="Open app menu" aria-haspopup="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
       <!-- Top-right actions -->
       <div id="actions-panel">
         <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
         <button id="btn-redo" title="Redo (Ctrl+Y)">↪</button>
-        <div class="actions-divider"></div>
-        <button id="btn-export" title="Export JSON">⬇ Export</button>
-        <button id="btn-import" title="Import JSON">⬆ Import</button>
         <div class="actions-divider"></div>
         <!-- Board picker button injected here by boardPicker.ts -->
         <div id="actions-bar" style="display:contents">

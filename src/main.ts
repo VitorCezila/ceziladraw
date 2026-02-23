@@ -3,7 +3,7 @@ import { CanvasManager } from './canvas/CanvasManager';
 import { Renderer } from './renderer/Renderer';
 import { ToolManager } from './tools/ToolManager';
 import { EventHandler } from './canvas/EventHandler';
-import { initStorage, exportToJson, importFromJson } from './storage/localStorage';
+import { initStorage } from './storage/localStorage';
 import { getAppState, updateElement, removeElements, subscribeToAppState } from './state/appState';
 import { subscribeToUIState, setViewport, setActiveStyle, getUIState } from './state/uiState';
 import { undo, redo, canUndo, canRedo, subscribeToHistory, snapshotElements, pushHistory } from './state/history';
@@ -14,6 +14,7 @@ import { copySelected, pasteClipboard } from './state/clipboard';
 import type { TextElement, StyleObject, DrawableElement, StrokeStyle, CornerStyle } from './types/elements';
 import { initAuth, showSignIn, signOut } from './auth/authGate';
 import { initBoardPicker } from './ui/boardPicker';
+import { initAppMenu } from './ui/appMenu';
 import { SUPABASE_ENABLED } from './lib/supabase';
 
 const ZOOM_STEP = 0.15;
@@ -39,8 +40,6 @@ function main() {
   const zoomLabel = document.getElementById('zoom-label')!;
   const btnUndo = document.getElementById('btn-undo') as HTMLButtonElement;
   const btnRedo = document.getElementById('btn-redo') as HTMLButtonElement;
-  const btnExport = document.getElementById('btn-export')!;
-  const btnImport = document.getElementById('btn-import')!;
   const btnZoomIn = document.getElementById('zoom-in')!;
   const btnZoomOut = document.getElementById('zoom-out')!;
   const btnZoomReset = document.getElementById('zoom-reset')!;
@@ -172,12 +171,8 @@ function main() {
     setActiveStyle({ strokeColor: newStroke });
   });
 
-  // ── Export / Import ──────────────────────────────────────
-  btnExport.addEventListener('click', exportToJson);
-  btnImport.addEventListener('click', () => {
-    importFromJson();
-    setTimeout(() => renderer.requestFullRender(), 300);
-  });
+  // ── App Menu ─────────────────────────────────────────────
+  initAppMenu(renderer);
 
   // ── Properties panel: stroke color ───────────────────────
   strokeSwatches.addEventListener('click', (e) => {
